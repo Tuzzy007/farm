@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>3D Farm - Fejlett Gazdaság</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
@@ -14,6 +13,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
         }
 
         body {
@@ -21,6 +21,7 @@
             color: #fff;
             overflow: hidden;
             height: 100vh;
+            width: 100vw;
         }
 
         #container {
@@ -52,81 +53,163 @@
             pointer-events: auto;
         }
 
-        /* UI panelek */
+        /* Responsive header */
         header {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             backdrop-filter: blur(10px);
             border-bottom: 3px solid #FFD700;
             z-index: 10;
-            padding: 10px 20px;
+            padding: 10px 15px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        @media (min-width: 768px) {
+            header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 20px;
+            }
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
         }
 
         .header-left h1 {
             color: #FFD700;
-            font-size: 1.8rem;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            line-height: 1.2;
         }
 
         .header-left .subtitle {
             color: #b3ffb3;
-            font-size: 0.9rem;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
         }
 
         .header-stats {
             display: flex;
-            gap: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        @media (min-width: 768px) {
+            .header-stats {
+                gap: 20px;
+                flex-wrap: nowrap;
+            }
         }
 
         .stat-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
+            min-width: 70px;
+        }
+
+        @media (min-width: 480px) {
+            .stat-item {
+                min-width: 90px;
+            }
         }
 
         .stat-value {
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
             color: #FFD700;
+            white-space: nowrap;
         }
 
         .stat-icon {
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 3vw, 1.2rem);
             color: #FFD700;
+            min-width: 20px;
         }
 
-        /* Fő panel - bal oldal */
+        /* Responsive panels */
         .main-panel {
             position: absolute;
-            top: 80px;
-            left: 20px;
-            width: 300px;
+            top: 90px;
+            left: 10px;
+            width: calc(100% - 20px);
+            max-width: 350px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
             z-index: 11;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+
+        @media (min-width: 1200px) {
+            .main-panel {
+                width: 300px;
+                max-width: 300px;
+                top: 80px;
+                left: 20px;
+                max-height: calc(100vh - 130px);
+            }
+        }
+
+        .right-panel {
+            position: absolute;
+            top: 90px;
+            right: 10px;
+            width: calc(100% - 20px);
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 11;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+
+        @media (min-width: 1200px) {
+            .right-panel {
+                width: 350px;
+                max-width: 350px;
+                top: 80px;
+                right: 20px;
+                max-height: calc(100vh - 130px);
+            }
+        }
+
+        /* Hide side panels on small screens */
+        @media (max-width: 767px) {
+            .main-panel, .right-panel {
+                display: none;
+            }
+            
+            .panel-toggle {
+                display: block !important;
+            }
         }
 
         .panel-section {
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 15px;
-            padding: 15px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 12px;
+            padding: 12px;
             border: 2px solid rgba(139, 69, 19, 0.8);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
+            width: 100%;
         }
 
         .section-title {
             color: #FFD700;
-            margin-bottom: 12px;
-            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
             border-bottom: 1px solid rgba(255, 215, 0, 0.3);
             padding-bottom: 5px;
             display: flex;
@@ -134,291 +217,245 @@
             align-items: center;
         }
 
-        /* Növények panel */
+        /* Responsive grids */
         .plants-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        @media (min-width: 480px) {
+            .plants-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+        }
+
+        .plant-item, .animal-item, .factory-item, .tool-item {
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70px;
+        }
+
+        @media (min-width: 480px) {
+            .plant-item, .animal-item, .factory-item, .tool-item {
+                padding: 10px;
+                min-height: 80px;
+            }
         }
 
         .plant-item {
             background: linear-gradient(145deg, #2a6b37, #1e5a2b);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
             border: 2px solid #8B4513;
-        }
-
-        .plant-item:hover {
-            transform: translateY(-3px);
-            border-color: #FFD700;
-        }
-
-        .plant-item.selected {
-            border: 3px solid #FFD700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-        }
-
-        .plant-icon {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            color: #FFD700;
-        }
-
-        .plant-name {
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .plant-cost {
-            font-size: 0.7rem;
-            color: #FFD700;
-            margin-top: 3px;
-        }
-
-        .plant-details {
-            font-size: 0.75rem;
-            color: #b3ffb3;
-            margin-top: 5px;
-        }
-
-        /* Állatok panel */
-        .animals-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
         }
 
         .animal-item {
             background: linear-gradient(145deg, #8B4513, #A0522D);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
             border: 2px solid #654321;
-        }
-
-        .animal-item:hover {
-            transform: translateY(-3px);
-            border-color: #FFD700;
-        }
-
-        .animal-icon {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            color: #FFD700;
-        }
-
-        /* Gyárak panel */
-        .factories-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
         }
 
         .factory-item {
             background: linear-gradient(145deg, #3a506b, #1c2541);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
             border: 2px solid #4a6486;
-        }
-
-        .factory-item:hover {
-            transform: translateY(-3px);
-            border-color: #FFD700;
-        }
-
-        .factory-icon {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            color: #FFD700;
-        }
-
-        /* Eszközök panel */
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
         }
 
         .tool-item {
             background: linear-gradient(145deg, #5d4037, #3e2723);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
             border: 2px solid #795548;
         }
 
-        .tool-item:hover {
-            transform: translateY(-3px);
+        .plant-item:hover, .animal-item:hover, .factory-item:hover, .tool-item:hover {
+            transform: translateY(-2px);
             border-color: #FFD700;
         }
 
-        .tool-item.selected {
+        .plant-item.selected, .tool-item.selected {
             border: 3px solid #FFD700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
 
-        .tool-icon {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
+        .plant-icon, .animal-icon, .factory-icon, .tool-icon {
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            margin-bottom: 4px;
             color: #FFD700;
         }
 
-        /* Jobb oldali panel */
-        .right-panel {
-            position: absolute;
-            top: 80px;
-            right: 20px;
-            width: 350px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 11;
+        .plant-name, .animal-name, .factory-name, .tool-name {
+            font-size: clamp(0.7rem, 2vw, 0.8rem);
+            font-weight: 500;
+            margin-bottom: 3px;
+            word-break: break-word;
+            text-align: center;
         }
 
-        /* Raktár panel */
-        .storage-items {
-            max-height: 200px;
+        .plant-cost, .animal-cost, .factory-cost {
+            font-size: clamp(0.6rem, 1.8vw, 0.7rem);
+            color: #FFD700;
+            margin-top: 2px;
+        }
+
+        .animals-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .factories-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        /* Storage and orders responsive */
+        .storage-items, .market-orders {
+            max-height: 150px;
             overflow-y: auto;
             padding-right: 5px;
+        }
+
+        @media (min-width: 768px) {
+            .storage-items, .market-orders {
+                max-height: 200px;
+            }
         }
 
         .storage-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 10px;
+            padding: 6px 8px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            margin-bottom: 5px;
+            border-radius: 6px;
+            margin-bottom: 4px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .storage-item-name {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .storage-count {
-            font-weight: bold;
-            color: #FFD700;
-        }
-
-        .storage-capacity {
-            font-size: 0.8rem;
-            color: #b3ffb3;
-            text-align: right;
-            margin-top: 5px;
-        }
-
-        /* Piac panel */
-        .market-orders {
-            max-height: 250px;
-            overflow-y: auto;
-            padding-right: 5px;
+            font-size: clamp(0.75rem, 2vw, 0.85rem);
         }
 
         .order-item {
             background: rgba(42, 107, 55, 0.3);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 10px;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
             border: 1px solid rgba(255, 215, 0, 0.3);
         }
 
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .order-customer {
-            font-weight: bold;
-            color: #FFD700;
-        }
-
-        .order-reward {
-            background: #4CAF50;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-        }
-
-        .order-items {
-            font-size: 0.9rem;
-            color: #e0e0e0;
-            margin-bottom: 8px;
-        }
-
-        .order-time {
-            font-size: 0.8rem;
-            color: #b3ffb3;
-            text-align: right;
-        }
-
-        .order-btn {
-            background: #FFD700;
-            color: #333;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.8rem;
-            margin-top: 8px;
+        /* Mobile bottom navigation */
+        .mobile-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
             width: 100%;
-            transition: all 0.3s;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 3px solid #FFD700;
+            z-index: 20;
+            display: none;
+            padding: 10px;
         }
 
-        .order-btn:hover {
-            background: #ffed4e;
-            transform: translateY(-2px);
+        @media (max-width: 767px) {
+            .mobile-nav {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .center-buttons {
+                display: none !important;
+            }
         }
 
-        /* Központi gombok */
+        .mobile-nav-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .mobile-nav-section {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 10px;
+            border: 2px solid rgba(139, 69, 19, 0.8);
+        }
+
+        .mobile-section-title {
+            color: #FFD700;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+            padding-bottom: 4px;
+        }
+
+        /* Responsive center buttons */
         .center-buttons {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
             z-index: 20;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        @media (max-width: 767px) {
+            .center-buttons {
+                bottom: 180px;
+                width: 95%;
+            }
         }
 
         .main-btn {
             background: linear-gradient(145deg, #2a6b37, #1e5a2b);
             color: white;
             border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
+            padding: clamp(8px, 2vw, 12px) clamp(15px, 3vw, 25px);
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: clamp(0.85rem, 2.5vw, 1rem);
             font-weight: bold;
             display: flex;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
             transition: all 0.3s;
             border: 2px solid #8B4513;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        @media (max-width: 767px) {
+            .main-btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+                min-width: 100px;
+            }
         }
 
         .main-btn:hover {
             background: linear-gradient(145deg, #3a8c4a, #2a6b37);
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             border-color: #FFD700;
         }
 
@@ -427,28 +464,106 @@
             cursor: not-allowed;
             transform: none;
             border-color: #666;
+            opacity: 0.7;
         }
 
-        /* Értesítések */
+        /* Panel toggle buttons */
+        .panel-toggle {
+            position: absolute;
+            top: 15px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #FFD700;
+            color: #FFD700;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 12;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 767px) {
+            .panel-toggle {
+                display: flex;
+            }
+        }
+
+        .panel-toggle.left {
+            left: 15px;
+        }
+
+        .panel-toggle.right {
+            right: 15px;
+        }
+
+        /* Mobile modals */
+        .mobile-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            display: none;
+            overflow-y: auto;
+            padding: 20px 15px 80px 15px;
+        }
+
+        .mobile-modal-content {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .mobile-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #FFD700;
+        }
+
+        .mobile-modal-title {
+            color: #FFD700;
+            font-size: 1.5rem;
+        }
+
+        .close-mobile-modal {
+            background: none;
+            border: none;
+            color: #FFD700;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        /* Notification responsive */
         .notification {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 20px 30px;
-            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: clamp(15px, 4vw, 20px) clamp(20px, 5vw, 30px);
+            border-radius: 12px;
             border: 2px solid #FFD700;
             color: #fff;
-            font-size: 1.1rem;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
             text-align: center;
             z-index: 100;
             display: none;
             backdrop-filter: blur(10px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            width: 90%;
             max-width: 400px;
+            word-wrap: break-word;
         }
 
+        /* Loading screen */
         .loading-screen {
             position: absolute;
             top: 0;
@@ -464,8 +579,8 @@
         }
 
         .loading-spinner {
-            width: 80px;
-            height: 80px;
+            width: clamp(60px, 15vw, 80px);
+            height: clamp(60px, 15vw, 80px);
             border: 8px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             border-top: 8px solid #FFD700;
@@ -473,64 +588,41 @@
             margin-bottom: 20px;
         }
 
+        .loading-text {
+            font-size: clamp(1rem, 4vw, 1.3rem);
+            color: #FFD700;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* Előugró ablakok */
-        .modal-overlay {
+        /* Tooltip responsive */
+        .object-tooltip {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+            pointer-events: none;
+            z-index: 100;
+            border: 1px solid #FFD700;
             display: none;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal {
-            background: rgba(0, 0, 0, 0.9);
-            border-radius: 20px;
-            padding: 30px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            border: 3px solid #FFD700;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-        }
-
-        .modal-title {
-            color: #FFD700;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            color: #FFD700;
-            font-size: 1.5rem;
-            cursor: pointer;
+            max-width: 250px;
+            word-wrap: break-word;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
 
         /* Progress bar */
         .progress-bar {
             width: 100%;
-            height: 10px;
+            height: 8px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
+            border-radius: 4px;
             overflow: hidden;
-            margin: 10px 0;
+            margin: 8px 0;
         }
 
         .progress-fill {
@@ -539,67 +631,80 @@
             transition: width 0.3s ease;
         }
 
-        /* Tooltip */
-        .object-tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            pointer-events: none;
-            z-index: 100;
-            border: 1px solid #FFD700;
-            display: none;
-            min-width: 200px;
-            max-width: 300px;
-        }
-
-        /* Kártevő ikon */
-        .pest-icon {
-            color: #ff4444;
-            animation: pulse-danger 1s infinite;
-        }
-
-        @keyframes pulse-danger {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        /* Alert ikon */
-        .alert-icon {
-            color: #ff9800;
-            animation: pulse-warning 1.5s infinite;
-        }
-
-        @keyframes pulse-warning {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        /* Scrollbar stílus */
+        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb {
             background: #FFD700;
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
             background: #ffed4e;
         }
+
+        /* Landscape orientation adjustments */
+        @media (max-height: 600px) and (orientation: landscape) {
+            header {
+                padding: 5px 10px;
+            }
+            
+            .header-left h1 {
+                font-size: 1rem;
+            }
+            
+            .main-panel, .right-panel {
+                top: 70px;
+                max-height: calc(100vh - 100px);
+            }
+            
+            .center-buttons {
+                bottom: 10px;
+            }
+            
+            .mobile-nav {
+                padding: 5px;
+            }
+        }
+
+        /* Very small phones */
+        @media (max-width: 360px) {
+            .main-btn {
+                min-width: 90px;
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .plant-item, .animal-item, .factory-item, .tool-item {
+                min-height: 60px;
+                padding: 6px;
+            }
+            
+            .plant-icon, .animal-icon, .factory-icon, .tool-icon {
+                font-size: 1rem;
+            }
+        }
+
+        /* Tablet optimizations */
+        @media (min-width: 768px) and (max-width: 1199px) {
+            .main-panel, .right-panel {
+                width: 280px;
+                max-width: 280px;
+            }
+            
+            .center-buttons {
+                width: 80%;
+            }
+        }
     </style>
 </head>
-
 <body>
     <div id="container">
         <div id="scene-container"></div>
@@ -612,11 +717,10 @@
             </div>
 
             <!-- Fejléc -->
-            <!-- Adjunk hozzá egy debug gombot a headerbe -->
             <header class="ui-element">
                 <div class="header-left">
-                    <h1>3D Farm - Fejlett Gazdaság</h1>
-                    <div class="subtitle">Növények • Állatok • Gyárak • Piac • Raktár</div>
+                    <h1>3D Farm</h1>
+                    <div class="subtitle">Növények • Állatok • Gyárak • Piac</div>
                 </div>
                 <div class="header-stats">
                     <div class="stat-item">
@@ -637,8 +741,16 @@
                 </div>
             </header>
 
+            <!-- Panel toggle buttons for mobile -->
+            <button class="panel-toggle left" id="leftPanelToggle" title="Eszközök">
+                <i class="fas fa-tools"></i>
+            </button>
+            <button class="panel-toggle right" id="rightPanelToggle" title="Raktár & Piac">
+                <i class="fas fa-warehouse"></i>
+            </button>
+
             <!-- Bal oldali panel -->
-            <div class="main-panel ui-element">
+            <div class="main-panel ui-element" id="mainPanel">
                 <!-- Növények -->
                 <div class="panel-section">
                     <div class="section-title">
@@ -665,10 +777,18 @@
                     </div>
                     <div class="factories-grid" id="factoriesGrid"></div>
                 </div>
+                
+                <!-- Eszközök -->
+                <div class="panel-section">
+                    <div class="section-title">
+                        <span>Eszközök</span>
+                    </div>
+                    <div class="tools-grid" id="toolsGrid"></div>
+                </div>
             </div>
 
             <!-- Jobb oldali panel -->
-            <div class="right-panel ui-element">
+            <div class="right-panel ui-element" id="rightPanel">
                 <!-- Raktár -->
                 <div class="panel-section">
                     <div class="section-title">
@@ -706,18 +826,150 @@
             <div class="center-buttons">
                 <button class="main-btn" id="harvestAllBtn" disabled>
                     <i class="fas fa-sickle"></i>
-                    Összes betakarítása
+                    <span class="btn-text">Betakarítás</span>
                     <span id="harvestCount">0</span>
                 </button>
                 <button class="main-btn" id="collectAllBtn" disabled>
                     <i class="fas fa-box"></i>
-                    Termékek gyűjtése
+                    <span class="btn-text">Gyűjtés</span>
                     <span id="collectCount">0</span>
                 </button>
                 <button class="main-btn" id="feedAllBtn">
                     <i class="fas fa-utensils"></i>
-                    Összes etetése
+                    <span class="btn-text">Etetés</span>
                 </button>
+            </div>
+
+            <!-- Mobile navigation -->
+            <div class="mobile-nav ui-element" id="mobileNav">
+                <div class="mobile-nav-grid">
+                    <button class="mobile-nav-section" id="mobilePlantsBtn">
+                        <div class="mobile-section-title">Növények</div>
+                        <div class="plant-icon">🌱</div>
+                    </button>
+                    <button class="mobile-nav-section" id="mobileAnimalsBtn">
+                        <div class="mobile-section-title">Állatok</div>
+                        <div class="animal-icon">🐔</div>
+                    </button>
+                    <button class="mobile-nav-section" id="mobileFactoriesBtn">
+                        <div class="mobile-section-title">Gyárak</div>
+                        <div class="factory-icon">🏭</div>
+                    </button>
+                    <button class="mobile-nav-section" id="mobileToolsBtn">
+                        <div class="mobile-section-title">Eszközök</div>
+                        <div class="tool-icon">🔧</div>
+                    </button>
+                </div>
+                
+                <div class="mobile-nav-grid">
+                    <button class="mobile-nav-section" id="mobileStorageBtn">
+                        <div class="mobile-section-title">Raktár</div>
+                        <div class="tool-icon">📦</div>
+                    </button>
+                    <button class="mobile-nav-section" id="mobileMarketBtn">
+                        <div class="mobile-section-title">Piac</div>
+                        <div class="tool-icon">💰</div>
+                    </button>
+                    <button class="mobile-nav-section" id="mobileTruckBtn">
+                        <div class="mobile-section-title">Teherautó</div>
+                        <div class="tool-icon">🚚</div>
+                    </button>
+                    <button class="mobile-nav-section" id="mobileInfoBtn">
+                        <div class="mobile-section-title">Info</div>
+                        <div class="tool-icon">ℹ️</div>
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <button class="main-btn" id="mobileHarvestBtn" disabled style="flex: 1;">
+                        <i class="fas fa-sickle"></i>
+                        <span id="mobileHarvestCount">0</span>
+                    </button>
+                    <button class="main-btn" id="mobileCollectBtn" disabled style="flex: 1;">
+                        <i class="fas fa-box"></i>
+                        <span id="mobileCollectCount">0</span>
+                    </button>
+                    <button class="main-btn" id="mobileFeedBtn" style="flex: 1;">
+                        <i class="fas fa-utensils"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile modals -->
+            <div class="mobile-modal" id="plantsModal">
+                <div class="mobile-modal-content">
+                    <div class="mobile-modal-header">
+                        <h2 class="mobile-modal-title">Növények</h2>
+                        <button class="close-mobile-modal" data-modal="plantsModal">×</button>
+                    </div>
+                    <div class="plants-grid" id="mobilePlantsGrid"></div>
+                </div>
+            </div>
+
+            <div class="mobile-modal" id="animalsModal">
+                <div class="mobile-modal-content">
+                    <div class="mobile-modal-header">
+                        <h2 class="mobile-modal-title">Állatok</h2>
+                        <button class="close-mobile-modal" data-modal="animalsModal">×</button>
+                    </div>
+                    <div class="animals-grid" id="mobileAnimalsGrid"></div>
+                </div>
+            </div>
+
+            <div class="mobile-modal" id="factoriesModal">
+                <div class="mobile-modal-content">
+                    <div class="mobile-modal-header">
+                        <h2 class="mobile-modal-title">Gyárak</h2>
+                        <button class="close-mobile-modal" data-modal="factoriesModal">×</button>
+                    </div>
+                    <div class="factories-grid" id="mobileFactoriesGrid"></div>
+                </div>
+            </div>
+
+            <div class="mobile-modal" id="toolsModal">
+                <div class="mobile-modal-content">
+                    <div class="mobile-modal-header">
+                        <h2 class="mobile-modal-title">Eszközök</h2>
+                        <button class="close-mobile-modal" data-modal="toolsModal">×</button>
+                    </div>
+                    <div class="tools-grid" id="mobileToolsGrid"></div>
+                </div>
+            </div>
+
+            <div class="mobile-modal" id="storageModal">
+                <div class="mobile-modal-content">
+                    <div class="mobile-modal-header">
+                        <h2 class="mobile-modal-title">Raktár</h2>
+                        <button class="close-mobile-modal" data-modal="storageModal">×</button>
+                    </div>
+                    <div class="storage-items" id="mobileStorageItems"></div>
+                    <div class="storage-capacity" style="margin-top: 15px;">
+                        <div>Kapacitás: <span id="mobileStorageCapacity">0/100</span></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="mobileStorageProgress"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mobile-modal" id="marketModal">
+                <div class="mobile-modal-content">
+                    <div class="mobile-modal-header">
+                        <h2 class="mobile-modal-title">Piaci rendelések</h2>
+                        <button class="close-mobile-modal" data-modal="marketModal">×</button>
+                    </div>
+                    <div class="market-orders" id="mobileMarketOrders"></div>
+                </div>
+            </div>
+
+            <div class="mobile-modal" id="truckModal">
+                <div class="mobile-modal-content">
+                    <div class="mobile-modal-header">
+                        <h2 class="mobile-modal-title">Teherautó megrendelések</h2>
+                        <button class="close-mobile-modal" data-modal="truckModal">×</button>
+                    </div>
+                    <div class="market-orders" id="mobileTruckOrders"></div>
+                </div>
             </div>
 
             <!-- Értesítés -->
@@ -727,19 +979,82 @@
 
             <!-- Tooltip -->
             <div class="object-tooltip" id="objectTooltip"></div>
-
-            <!-- Raktár modal -->
-            <div class="modal-overlay" id="storageModal">
-                <div class="modal">
-                    <button class="close-modal" id="closeStorageModal">×</button>
-                    <h2 class="modal-title">Raktár Kezelés</h2>
-                    <div id="storageModalContent"></div>
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
+        // === RESPONSIVE UTILITIES ===
+        let isMobile = false;
+        let currentModal = null;
+
+        function checkResponsive() {
+            const width = window.innerWidth;
+            isMobile = width < 768;
+            
+            // Update UI based on screen size
+            if (isMobile) {
+                document.getElementById('mobileNav').style.display = 'flex';
+                document.querySelector('.center-buttons').style.display = 'flex';
+                document.querySelectorAll('.panel-toggle').forEach(btn => btn.style.display = 'flex');
+            } else {
+                document.getElementById('mobileNav').style.display = 'none';
+                document.querySelector('.center-buttons').style.display = 'flex';
+                document.querySelectorAll('.panel-toggle').forEach(btn => btn.style.display = 'none');
+                document.getElementById('mainPanel').style.display = 'flex';
+                document.getElementById('rightPanel').style.display = 'flex';
+            }
+            
+            // Update camera for mobile
+            if (camera) {
+                if (isMobile) {
+                    camera.position.set(60, 80, 60);
+                    controls.minDistance = 30;
+                    controls.maxDistance = 150;
+                } else {
+                    camera.position.set(50, 70, 50);
+                    controls.minDistance = 20;
+                    controls.maxDistance = 200;
+                }
+                camera.updateProjectionMatrix();
+            }
+        }
+
+        function openMobileModal(modalId) {
+            document.querySelectorAll('.mobile-modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+            document.getElementById(modalId).style.display = 'block';
+            currentModal = modalId;
+        }
+
+        function closeCurrentModal() {
+            if (currentModal) {
+                document.getElementById(currentModal).style.display = 'none';
+                currentModal = null;
+            }
+        }
+
+        function updateMobileUI() {
+            if (!isMobile) return;
+            
+            // Sync counts to mobile buttons
+            const harvestCount = document.getElementById('harvestCount').textContent;
+            const collectCount = document.getElementById('collectCount').textContent;
+            
+            document.getElementById('mobileHarvestCount').textContent = harvestCount;
+            document.getElementById('mobileCollectCount').textContent = collectCount;
+            
+            document.getElementById('mobileHarvestBtn').disabled = harvestCount === '0';
+            document.getElementById('mobileCollectBtn').disabled = collectCount === '0';
+            
+            // Sync storage info
+            const storageCapacity = document.getElementById('storageCapacity').textContent;
+            document.getElementById('mobileStorageCapacity').textContent = storageCapacity;
+            
+            const storageProgress = document.getElementById('storageProgress').style.width;
+            document.getElementById('mobileStorageProgress').style.width = storageProgress;
+        }
+
         // === JÁTÉK ÁLLAPOT ===
         let gameState = {
             gold: 10000,
@@ -944,26 +1259,29 @@
                 input: { wheat: 2 },
                 output: { flour: 3 },
                 color: 0xA9A9A9
+            },
+            feedmill: {
+                name: "Takarmánygyár",
+                cost: 3500,
+                processTime: 10000,
+                input: { corn: 3, wheat: 2 },
+                output: { feed: 5 },
+                color: 0x8BC34A
             }
         };
 
         // === TERMÉK ADATOK ===
         const productData = {
-            // Nyers termékek
             corn: { name: "Kukorica", icon: "🌽", value: 20, category: "crop" },
             wheat: { name: "Búza", icon: "🌾", value: 15, category: "crop" },
             carrot: { name: "Répa", icon: "🥕", value: 10, category: "crop" },
             tomato: { name: "Paradicsom", icon: "🍅", value: 25, category: "crop" },
             wood: { name: "Fa", icon: "🪵", value: 50, category: "wood" },
-            
-            // Állati termékek
             egg: { name: "Tojás", icon: "🥚", value: 30, category: "animal" },
             milk: { name: "Tej", icon: "🥛", value: 40, category: "animal" },
             bacon: { name: "Szalonna", icon: "🥓", value: 60, category: "animal" },
             goatmilk: { name: "Kecsketej", icon: "🐐", value: 50, category: "animal" },
             honey: { name: "Méz", icon: "🍯", value: 80, category: "animal" },
-            
-            // Feldolgozott termékek
             bread: { name: "Kenyér", icon: "🍞", value: 100, category: "processed" },
             sugar: { name: "Cukor", icon: "🍬", value: 70, category: "processed" },
             cheese: { name: "Sajt", icon: "🧀", value: 120, category: "processed" },
@@ -1020,16 +1338,21 @@
             window.addEventListener('resize', onWindowResize);
             renderer.domElement.addEventListener('click', onCanvasClick);
             renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
             
             // Setup UI
             setupUI();
+            setupMobileUI();
             generateMarketOrders();
             generateTruckOrders();
+
+            // Check responsive
+            checkResponsive();
 
             // Hide loading screen
             setTimeout(() => {
                 document.getElementById('loadingScreen').style.display = 'none';
-                showNotification('Üdvözöllek a 3D Farmban! Kezdd a kukoricával!');
+                showNotification('Üdvözöllek a 3D Farmban!');
             }, 1500);
 
             // Start game loop
@@ -1048,7 +1371,7 @@
             scene.add(objects.ground);
 
             // Grass texture variation
-            for (let i = 0; i < 500; i++) {
+            for (let i = 0; i < 300; i++) {
                 const grassGeometry = new THREE.ConeGeometry(0.1, 0.3, 3);
                 const grassMaterial = new THREE.MeshLambertMaterial({ 
                     color: Math.random() > 0.5 ? 0x7CB342 : 0x8BC34A 
@@ -1064,13 +1387,11 @@
             }
         }
 
-        // A createGrid() függvényben javítsd:
         function createGrid() {
             const farmAreaSize = gridSize * gridSpacing;
             const startX = -farmAreaSize / 2;
             const startZ = -farmAreaSize / 2;
         
-            // Eredeti farmGrid törlése, ha volt
             farmGrid = [];
         
             for (let i = 0; i < gridSize; i++) {
@@ -1082,14 +1403,14 @@
                         transparent: true, 
                         opacity: 0.2,
                         side: THREE.DoubleSide,
-                        depthWrite: false // Fontos!
+                        depthWrite: false
                     });
 
                     const cell = new THREE.Mesh(cellGeometry, cellMaterial);
                     const worldX = startX + i * gridSpacing + gridSpacing / 2;
                     const worldZ = startZ + j * gridSpacing + gridSpacing / 2;
 
-                    cell.position.set(worldX, 0.02, worldZ); // Kicsit magasabban
+                    cell.position.set(worldX, 0.02, worldZ);
                     cell.rotation.x = -Math.PI / 2;
                     cell.userData = { 
                         type: 'farmCell', 
@@ -1111,7 +1432,6 @@
         }
 
         function initStorage() {
-            // Initialize storage with some items
             gameState.storage.items = {
                 corn: 5,
                 wheat: 3,
@@ -1124,62 +1444,76 @@
         function setupUI() {
             // Plants grid
             const plantsGrid = document.getElementById('plantsGrid');
+            const mobilePlantsGrid = document.getElementById('mobilePlantsGrid');
+            
             for (const [type, data] of Object.entries(plantData)) {
-                const plantDiv = document.createElement('div');
-                plantDiv.className = 'plant-item';
-                plantDiv.dataset.type = type;
-                plantDiv.innerHTML = `
-                    <div class="plant-icon">${type === 'tree' ? '🌲' : '🌱'}</div>
-                    <div class="plant-name">${data.name}</div>
-                    <div class="plant-cost">${data.harvestValue} arany</div>
-                    <div class="plant-details">${data.growthTime/1000}s</div>
-                `;
+                // Desktop version
+                const plantDiv = createPlantItem(type, data);
                 plantDiv.addEventListener('click', () => selectPlant(type));
                 plantsGrid.appendChild(plantDiv);
+                
+                // Mobile version
+                const mobilePlantDiv = createPlantItem(type, data);
+                mobilePlantDiv.addEventListener('click', () => {
+                    selectPlant(type);
+                    closeCurrentModal();
+                    showNotification(`${data.name} kiválasztva`);
+                });
+                mobilePlantsGrid.appendChild(mobilePlantDiv);
             }
         
-            // Animals grid - frissítsük az eseménykezelőt
+            // Animals grid
             const animalsGrid = document.getElementById('animalsGrid');
+            const mobileAnimalsGrid = document.getElementById('mobileAnimalsGrid');
+            
             for (const [type, data] of Object.entries(animalData)) {
-                const animalDiv = document.createElement('div');
-                animalDiv.className = 'animal-item';
-                animalDiv.dataset.type = type;
-                animalDiv.innerHTML = `
-                    <div class="animal-icon">${
-                        type === 'chicken' ? '🐔' :
-                        type === 'cow' ? '🐄' :
-                        type === 'pig' ? '🐖' :
-                        type === 'goat' ? '🐐' : '🐝'
-                    }</div>
-                    <div class="plant-name">${data.name}</div>
-                    <div class="plant-cost">${data.cost} arany</div>
-                `;
+                // Desktop
+                const animalDiv = createAnimalItem(type, data);
                 animalDiv.addEventListener('click', () => {
                     gameState.selectedAnimal = type;
                     selectTool('animal');
                 });
                 animalsGrid.appendChild(animalDiv);
+                
+                // Mobile
+                const mobileAnimalDiv = createAnimalItem(type, data);
+                mobileAnimalDiv.addEventListener('click', () => {
+                    gameState.selectedAnimal = type;
+                    selectTool('animal');
+                    closeCurrentModal();
+                    showNotification(`${data.name} kiválasztva`);
+                });
+                mobileAnimalsGrid.appendChild(mobileAnimalDiv);
             }
         
-            // Factories grid - frissítsük az eseménykezelőt
+            // Factories grid
             const factoriesGrid = document.getElementById('factoriesGrid');
+            const mobileFactoriesGrid = document.getElementById('mobileFactoriesGrid');
+            
             for (const [type, data] of Object.entries(factoryData)) {
-                const factoryDiv = document.createElement('div');
-                factoryDiv.className = 'factory-item';
-                factoryDiv.dataset.type = type;
-                factoryDiv.innerHTML = `
-                    <div class="factory-icon">🏭</div>
-                    <div class="plant-name">${data.name}</div>
-                    <div class="plant-cost">${data.cost} arany</div>
-                `;
+                // Desktop
+                const factoryDiv = createFactoryItem(type, data);
                 factoryDiv.addEventListener('click', () => {
                     gameState.selectedFactory = type;
                     selectTool('factory');
                 });
                 factoriesGrid.appendChild(factoryDiv);
+                
+                // Mobile
+                const mobileFactoryDiv = createFactoryItem(type, data);
+                mobileFactoryDiv.addEventListener('click', () => {
+                    gameState.selectedFactory = type;
+                    selectTool('factory');
+                    closeCurrentModal();
+                    showNotification(`${data.name} kiválasztva`);
+                });
+                mobileFactoriesGrid.appendChild(mobileFactoryDiv);
             }
         
-            // Create tools section
+            // Tools grid
+            const toolsGrid = document.getElementById('toolsGrid');
+            const mobileToolsGrid = document.getElementById('mobileToolsGrid');
+            
             const tools = [
                 { type: 'plant', name: 'Ültetés', icon: '🌱' },
                 { type: 'harvest', name: 'Betakarítás', icon: '✂️' },
@@ -1188,37 +1522,41 @@
                 { type: 'remove', name: 'Törlés', icon: '🗑️' },
                 { type: 'info', name: 'Információ', icon: 'ℹ️' }
             ];
-        
-            const toolsGrid = document.createElement('div');
-            toolsGrid.className = 'tools-grid';
 
             tools.forEach(tool => {
-                const toolDiv = document.createElement('div');
-                toolDiv.className = 'tool-item';
-                toolDiv.dataset.type = tool.type;
-                toolDiv.innerHTML = `
-                    <div class="tool-icon">${tool.icon}</div>
-                    <div class="plant-name">${tool.name}</div>
-                `;
+                // Desktop
+                const toolDiv = createToolItem(tool);
                 toolDiv.addEventListener('click', () => selectTool(tool.type));
                 toolsGrid.appendChild(toolDiv);
+                
+                // Mobile
+                const mobileToolDiv = createToolItem(tool);
+                mobileToolDiv.addEventListener('click', () => {
+                    selectTool(tool.type);
+                    closeCurrentModal();
+                });
+                mobileToolsGrid.appendChild(mobileToolDiv);
             });
-        
-            // Add tools to main panel
-            const mainPanel = document.querySelector('.main-panel');
-            const toolsSection = document.createElement('div');
-            toolsSection.className = 'panel-section';
-            toolsSection.innerHTML = '<div class="section-title"><span>Eszközök</span></div>';
-            toolsSection.appendChild(toolsGrid);
-            mainPanel.appendChild(toolsSection);
         
             // Setup event listeners
             document.getElementById('harvestAllBtn').addEventListener('click', harvestAllReady);
             document.getElementById('collectAllBtn').addEventListener('click', collectAllProducts);
             document.getElementById('feedAllBtn').addEventListener('click', feedAllAnimals);
             document.getElementById('refreshOrders').addEventListener('click', refreshOrders);
-            document.getElementById('closeStorageModal').addEventListener('click', () => {
-                document.getElementById('storageModal').style.display = 'none';
+            
+            document.getElementById('mobileHarvestBtn').addEventListener('click', harvestAllReady);
+            document.getElementById('mobileCollectBtn').addEventListener('click', collectAllProducts);
+            document.getElementById('mobileFeedBtn').addEventListener('click', feedAllAnimals);
+
+            // Panel toggles
+            document.getElementById('leftPanelToggle').addEventListener('click', () => {
+                const panel = document.getElementById('mainPanel');
+                panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+            });
+            
+            document.getElementById('rightPanelToggle').addEventListener('click', () => {
+                const panel = document.getElementById('rightPanel');
+                panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
             });
         
             // Alapértelmezett beállítások
@@ -1228,30 +1566,119 @@
             }, 100);
         }
 
+        function setupMobileUI() {
+            // Mobile modal buttons
+            document.getElementById('mobilePlantsBtn').addEventListener('click', () => openMobileModal('plantsModal'));
+            document.getElementById('mobileAnimalsBtn').addEventListener('click', () => openMobileModal('animalsModal'));
+            document.getElementById('mobileFactoriesBtn').addEventListener('click', () => openMobileModal('factoriesModal'));
+            document.getElementById('mobileToolsBtn').addEventListener('click', () => openMobileModal('toolsModal'));
+            document.getElementById('mobileStorageBtn').addEventListener('click', () => {
+                openMobileModal('storageModal');
+                updateMobileStorage();
+            });
+            document.getElementById('mobileMarketBtn').addEventListener('click', () => {
+                openMobileModal('marketModal');
+                updateMobileMarketOrders();
+            });
+            document.getElementById('mobileTruckBtn').addEventListener('click', () => {
+                openMobileModal('truckModal');
+                updateMobileTruckOrders();
+            });
+            document.getElementById('mobileInfoBtn').addEventListener('click', () => {
+                showNotification('Kattints az objektumokra interakcióhoz!');
+            });
+
+            // Close modal buttons
+            document.querySelectorAll('.close-mobile-modal').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const modalId = e.target.closest('.close-mobile-modal').dataset.modal;
+                    document.getElementById(modalId).style.display = 'none';
+                    currentModal = null;
+                });
+            });
+
+            // Close modal on outside click
+            document.querySelectorAll('.mobile-modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                        currentModal = null;
+                    }
+                });
+            });
+        }
+
+        function createPlantItem(type, data) {
+            const plantDiv = document.createElement('div');
+            plantDiv.className = 'plant-item';
+            plantDiv.dataset.type = type;
+            plantDiv.innerHTML = `
+                <div class="plant-icon">${type === 'tree' ? '🌲' : '🌱'}</div>
+                <div class="plant-name">${data.name}</div>
+                <div class="plant-cost">${data.harvestValue}💰</div>
+            `;
+            return plantDiv;
+        }
+
+        function createAnimalItem(type, data) {
+            const animalDiv = document.createElement('div');
+            animalDiv.className = 'animal-item';
+            animalDiv.dataset.type = type;
+            animalDiv.innerHTML = `
+                <div class="animal-icon">${
+                    type === 'chicken' ? '🐔' :
+                    type === 'cow' ? '🐄' :
+                    type === 'pig' ? '🐖' :
+                    type === 'goat' ? '🐐' : '🐝'
+                }</div>
+                <div class="plant-name">${data.name}</div>
+                <div class="plant-cost">${data.cost}💰</div>
+            `;
+            return animalDiv;
+        }
+
+        function createFactoryItem(type, data) {
+            const factoryDiv = document.createElement('div');
+            factoryDiv.className = 'factory-item';
+            factoryDiv.dataset.type = type;
+            factoryDiv.innerHTML = `
+                <div class="factory-icon">🏭</div>
+                <div class="plant-name">${data.name}</div>
+                <div class="plant-cost">${data.cost}💰</div>
+            `;
+            return factoryDiv;
+        }
+
+        function createToolItem(tool) {
+            const toolDiv = document.createElement('div');
+            toolDiv.className = 'tool-item';
+            toolDiv.dataset.type = tool.type;
+            toolDiv.innerHTML = `
+                <div class="tool-icon">${tool.icon}</div>
+                <div class="plant-name">${tool.name}</div>
+            `;
+            return toolDiv;
+        }
+
         function selectPlant(type) {
             gameState.selectedPlant = type;
             gameState.selectedTool = 'plant';
                 
             // Update UI
             document.querySelectorAll('.plant-item').forEach(item => {
-                if (item && item.classList) {
-                    item.classList.remove('selected');
-                }
+                item.classList.remove('selected');
             });
             
-            const selectedPlantElement = document.querySelector(`.plant-item[data-type="${type}"]`);
-            if (selectedPlantElement) {
-                selectedPlantElement.classList.add('selected');
-            }
+            document.querySelectorAll(`.plant-item[data-type="${type}"]`).forEach(item => {
+                item.classList.add('selected');
+            });
             
             document.getElementById('selectedPlantName').textContent = plantData[type].name;
             
-            // Update tool selection - CSAK ha a plant tool van kiválasztva
+            // Update tool selection
             if (gameState.selectedTool === 'plant') {
                 document.querySelectorAll('.tool-item').forEach(item => {
-                    if (item && item.classList) {
-                        item.classList.remove('selected');
-                    }
+                    item.classList.remove('selected');
                 });
                 
                 const plantToolElement = document.querySelector('.tool-item[data-type="plant"]');
@@ -1263,6 +1690,40 @@
             updateSelectionUI();
             
             showNotification(`${plantData[type].name} kiválasztva`);
+        }
+        
+        function selectTool(type) {
+            gameState.selectedTool = type;
+
+            // Frissítsd az UI-t
+            updateSelectionUI();
+
+            // Értesítés a felhasználónak
+            let message = '';
+            switch(type) {
+                case 'plant': 
+                    message = 'Ültetés mód: Válassz növényt, majd kattints egy üres cellára'; 
+                    break;
+                case 'harvest': 
+                    message = 'Betakarítás mód: Kattints egy érett növényre'; 
+                    break;
+                case 'feed': 
+                    message = 'Etetés mód: Kattints egy éhes állatra'; 
+                    break;
+                case 'collect': 
+                    message = 'Gyűjtés mód: Kattints egy állatra vagy gyárra, aminek van terméke'; 
+                    break;
+                case 'remove': 
+                    message = 'Törlés mód: Kattints bármely objektumra az eltávolításhoz'; 
+                    break;
+                case 'info': 
+                    message = 'Információ mód: Kattints bármely objektumra a részletekért'; 
+                    break;
+                default:
+                    message = `Eszköz aktiválva: ${type}`;
+            }
+
+            showNotification(message);
         }
 
         function updateSelectionUI() {
@@ -1282,16 +1743,13 @@
             });
 
             if (gameState.selectedTool === 'plant' && gameState.selectedPlant) {
-                const selectedPlant = document.querySelector(`.plant-item[data-type="${gameState.selectedPlant}"]`);
-                if (selectedPlant) {
-                    selectedPlant.classList.add('selected');
-                }
+                document.querySelectorAll(`.plant-item[data-type="${gameState.selectedPlant}"]`).forEach(item => {
+                    item.classList.add('selected');
+                });
             }
         }
         
         function selectTool(type) {
-            console.log('Tool selected:', type);
-
             gameState.selectedTool = type;
 
             // Frissítsd az UI-t
@@ -1301,13 +1759,13 @@
             let message = '';
             switch(type) {
                 case 'plant': 
-                    message = 'Ültetés mód: Válassz növényt bal oldalon, majd kattints egy üres cellára'; 
+                    message = 'Ültetés mód: Válassz növényt, majd kattints egy üres cellára'; 
                     break;
                 case 'harvest': 
-                    message = 'Betakarítás mód: Kattints egy érett (arany) növényre'; 
+                    message = 'Betakarítás mód: Kattints egy érett növényre'; 
                     break;
                 case 'feed': 
-                    message = 'Etetés mód: Kattints egy éhes (vörös) állatra'; 
+                    message = 'Etetés mód: Kattints egy éhes állatra'; 
                     break;
                 case 'collect': 
                     message = 'Gyűjtés mód: Kattints egy állatra vagy gyárra, aminek van terméke'; 
@@ -1319,7 +1777,7 @@
                     message = 'Információ mód: Kattints bármely objektumra a részletekért'; 
                     break;
                 default:
-                    message = `Ismeretlen eszköz: ${type}`;
+                    message = `Eszköz aktiválva: ${type}`;
             }
 
             showNotification(message);
@@ -1803,22 +2261,25 @@
                 showNotification('Nincs még termék!');
                 return;
             }
-
+        
             // Hozzáadás a raktárhoz
             addToStorage(data.product, 1);
-
-            // Állat állapotának frissítése
+        
+            // Állat állapotának frissítése - CSAK a termék állapotát
             data.productReady = false;
             data.productReadyAt = 0;
 
-            // Vizuális visszajelzés
+            // NE állítsuk vissza az etetési állapotot!
+            // data.fed = true; // EZT NE!
+        
+            // Vizuális visszajelzés - csak a fény effektus tűnjön el
             animal.children.forEach(child => {
-                if (child.material) {
+                if (child.material && child.material.emissive) {
                     child.material.emissive = new THREE.Color(0x000000);
                     child.material.emissiveIntensity = 0;
                 }
             });
-
+        
             addXP(5);
             showNotification(`${animalData[data.animalType].name} terméke begyűjtve! (+1 ${productData[data.product]?.name || data.product})`);
             updateUI();
@@ -1971,38 +2432,35 @@
 
         function collectProduct(obj) {
             const data = obj.userData;
-            
+
             if (data.type === 'animal') {
                 if (!data.productReady) {
                     showNotification('Nincs még termék!');
                     return;
                 }
-                
-                addToStorage(data.product, 1);
-                data.productReady = false;
-                data.productReadyAt = 0;
-                
-                addXP(5);
-                showNotification(`${animalData[data.animalType].name} terméke begyűjtve!`);
-                
+
+                // Hívd meg az új függvényt
+                collectAnimalProduct(obj);
+                return; // Fontos: return, nehogy a régi kód is lefusson
+
             } else if (data.type === 'factory') {
                 if (!data.productReady) {
                     showNotification('Nincs még termék!');
                     return;
                 }
-                
+
                 // Add all output products
                 for (const [product, count] of Object.entries(data.output)) {
                     addToStorage(product, count);
                 }
-                
+
                 data.productReady = false;
                 data.processing = false;
-                
+
                 addXP(15);
                 showNotification(`${factoryData[data.factoryType].name} termékei begyűjtve!`);
             }
-            
+
             updateUI();
         }
 
@@ -2229,78 +2687,87 @@
             const now = Date.now();
             let productCount = 0;
             let hungryCount = 0;
-
+        
             objects.animals.forEach(animal => {
                 if (!animal || !animal.userData) return;
-
+            
                 const data = animal.userData;
-
+            
                 // Ellenőrizzük az éhséget
                 if (data.fed) {
                     const timeSinceFed = now - data.fedAt;
                     const hungerProgress = Math.min(timeSinceFed / data.hungerTime, 1);
-
+                
                     if (hungerProgress >= 1) {
                         // Állat éhes lett
                         data.fed = false;
-
-                        // Vizuális visszajelzés - piros fény
+                    
+                        // Vizuális visszajelzés - CSAK a testre, NEM az ikonra
                         animal.children.forEach(child => {
-                            if (child.material) {
+                            // Csak a BoxGeometry (test) és hasonlók, NEM a PlaneGeometry (ikon)
+                            if (child.material && child.geometry && child.geometry.type !== 'PlaneGeometry') {
                                 child.material.emissive = new THREE.Color(0xFF0000);
                                 child.material.emissiveIntensity = 0.2;
                             }
                         });
-
+                    
                         console.log(`${data.name} éhes lett!`);
                     }
                 }
-
+            
                 if (!data.fed) {
                     hungryCount++;
                 }
-
+            
                 // Termék generálás (csak ha jól lakott)
                 if (data.fed && !data.productReady) {
                     if (!data.productReadyAt) {
                         data.productReadyAt = now;
                     } else {
                         const productProgress = Math.min((now - data.productReadyAt) / data.productTime, 1);
-
+                    
                         if (productProgress >= 1) {
                             // Termék kész!
                             data.productReady = true;
-
-                            // Vizuális visszajelzés - sárga fény
+                        
+                            // Vizuális visszajelzés - CSAK a testre, NEM az ikonra
                             animal.children.forEach(child => {
-                                if (child.material) {
+                                // Csak a BoxGeometry (test) és hasonlók, NEM a PlaneGeometry (ikon)
+                                if (child.material && child.geometry && child.geometry.type !== 'PlaneGeometry') {
                                     child.material.emissive = new THREE.Color(0xFFFF00);
                                     child.material.emissiveIntensity = 0.3;
                                 }
                             });
-
+                        
                             console.log(`${data.name} terméke kész: ${data.product}`);
                         }
                     }
                 }
-
+            
                 if (data.productReady) {
                     productCount++;
                 }
-
+            
                 // Egyszerű animáció - enyhe mozgás
                 const time = now * 0.001;
                 animal.position.y = 0.1 + Math.sin(time + animal.position.x) * 0.05;
-
+            
                 // Az ikon mindig nézzen a kamerára
                 const icon = animal.children.find(child => 
                     child.geometry && child.geometry.type === 'PlaneGeometry'
                 );
                 if (icon) {
                     icon.lookAt(camera.position);
+                    
+                    // Fontos: tartsuk meg az ikon original material-jét!
+                    // Ha az ikon material-je BasicMaterial, akkor ne módosítsuk az emissive-ot
+                    if (icon.material && icon.material.type === 'MeshBasicMaterial') {
+                        // BasicMaterial-nak nincs emissive tulajdonsága
+                        // Csak a fényt befogadó material-oknak van
+                    }
                 }
             });
-
+        
             // Frissítsd az UI-t
             const collectBtn = document.getElementById('collectAllBtn');
             const collectCount = document.getElementById('collectCount');
@@ -2311,7 +2778,7 @@
                     `${productCount} termék gyűjtése` : 
                     'Nincs gyűjthető termék';
             }
-
+        
             const feedBtn = document.getElementById('feedAllBtn');
             if (feedBtn) {
                 const hasFeed = gameState.storage.items.feed && gameState.storage.items.feed > 0;
@@ -2320,7 +2787,7 @@
                                hungryCount > 0 ? `${hungryCount} állat etetése` :
                                'Minden állat jól lakott';
             }
-
+        
             return { hungryCount, productCount };
         }
 
@@ -2995,6 +3462,117 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            checkResponsive();
+        }
+
+        function onTouchStart(event) {
+            // Touch esemény kezelése mobil eszközökön
+            if (event.touches.length === 1) {
+                const touch = event.touches[0];
+                
+                // Szimuláljunk kattintást
+                const clickEvent = new MouseEvent('click', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                
+                renderer.domElement.dispatchEvent(clickEvent);
+                
+                // Akadályozzuk meg a scroll-t
+                event.preventDefault();
+            }
+        }
+
+        function updateMobileStorage() {
+            const storageItems = document.getElementById('mobileStorageItems');
+            if (!storageItems) return;
+            
+            let itemsHTML = '';
+            
+            for (const [item, count] of Object.entries(gameState.storage.items)) {
+                const product = productData[item];
+                itemsHTML += `
+                    <div class="storage-item">
+                        <div class="storage-item-name">
+                            <span>${product ? product.icon : '📦'}</span>
+                            <span>${product ? product.name : item}</span>
+                        </div>
+                        <div class="storage-count">${count}</div>
+                    </div>
+                `;
+            }
+            
+            storageItems.innerHTML = itemsHTML || '<div style="text-align: center; padding: 10px; color: #888;">Üres</div>';
+        }
+
+        function updateMobileMarketOrders() {
+            const marketOrders = document.getElementById('mobileMarketOrders');
+            if (!marketOrders) return;
+            
+            let ordersHTML = '';
+            
+            gameState.marketOrders.forEach(order => {
+                const timeLeft = Math.max(0, order.expiresAt - Date.now());
+                const minutes = Math.floor(timeLeft / 60000);
+                const seconds = Math.floor((timeLeft % 60000) / 1000);
+                
+                let itemsText = '';
+                for (const [item, count] of Object.entries(order.items)) {
+                    const product = productData[item];
+                    itemsText += `${product ? product.icon : ''} ${count} `;
+                }
+                
+                ordersHTML += `
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span class="order-customer">${order.customer}</span>
+                            <span class="order-reward">+${order.reward}💰</span>
+                        </div>
+                        <div class="order-items">${itemsText}</div>
+                        <div class="order-time">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+                        <button class="order-btn" onclick="fulfillMarketOrder('${order.id}')">
+                            Teljesítés
+                        </button>
+                    </div>
+                `;
+            });
+            
+            marketOrders.innerHTML = ordersHTML || '<div style="text-align: center; padding: 10px; color: #888;">Nincs aktív rendelés</div>';
+        }
+
+        function updateMobileTruckOrders() {
+            const truckOrders = document.getElementById('mobileTruckOrders');
+            if (!truckOrders) return;
+            
+            let ordersHTML = '';
+            
+            gameState.truckOrders.forEach(order => {
+                const timeLeft = Math.max(0, order.expiresAt - Date.now());
+                const minutes = Math.floor(timeLeft / 60000);
+                const seconds = Math.floor((timeLeft % 60000) / 1000);
+                
+                let itemsText = '';
+                for (const [item, count] of Object.entries(order.items)) {
+                    const product = productData[item];
+                    itemsText += `${product ? product.icon : ''} ${count} `;
+                }
+                
+                ordersHTML += `
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span class="order-customer">Teherautó</span>
+                            <span class="order-reward">+${order.reward}💰 +${order.xp}⭐</span>
+                        </div>
+                        <div class="order-items">${itemsText}</div>
+                        <div class="order-time">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+                        <button class="order-btn" onclick="fulfillTruckOrder('${order.id}')">
+                            Felrakás
+                        </button>
+                    </div>
+                `;
+            });
+            
+            truckOrders.innerHTML = ordersHTML || '<div style="text-align: center; padding: 10px; color: #888;">Nincs aktív megrendelés</div>';
         }
 
         function animate() {
@@ -3025,6 +3603,8 @@
         // Make functions available globally for HTML onclick handlers
         window.fulfillMarketOrder = fulfillMarketOrder;
         window.fulfillTruckOrder = fulfillTruckOrder;
+        window.openMobileModal = openMobileModal;
+        window.closeCurrentModal = closeCurrentModal;
 
         // Start the game
         init();
