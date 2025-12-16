@@ -1183,26 +1183,26 @@
 
                 <div class="panel-section">
                     <div class="section-title">
-                        <span>Piaci rendelések <span class="level-lock">(4. szint)</span></span>
+                        <span>Piaci rendelések <span class="level-lock">(2. szint)</span></span>
                         <i class="fas fa-sync-alt" title="Újratöltés" id="refreshOrders"></i>
                     </div>
                     <div class="market-orders" id="marketOrders">
                         <div class="market-locked">
                             <div class="market-locked-icon">🔒</div>
-                            Piaci rendelések elérhetők 4. szinttől!
+                            Piaci rendelések elérhetők 2. szinttől!
                         </div>
                     </div>
                 </div>
 
                 <div class="panel-section">
                     <div class="section-title">
-                        <span>Teherautó megrendelések <span class="level-lock">(4. szint)</span></span>
+                        <span>Teherautó megrendelések <span class="level-lock">(2. szint)</span></span>
                         <i class="fas fa-truck"></i>
                     </div>
                     <div class="market-orders" id="truckOrders">
                         <div class="market-locked">
                             <div class="market-locked-icon">🚚</div>
-                            Teherautó rendelések elérhetők 4. szinttől!
+                            Teherautó rendelések elérhetők 2. szinttől!
                         </div>
                     </div>
                 </div>
@@ -1344,7 +1344,7 @@
                     <div class="market-orders" id="mobileMarketOrders">
                         <div class="market-locked">
                             <div class="market-locked-icon">🔒</div>
-                            Piaci rendelések elérhetők 4. szinttől!
+                            Piaci rendelések elérhetők 2. szinttől!
                         </div>
                     </div>
                 </div>
@@ -1359,7 +1359,7 @@
                     <div class="market-orders" id="mobileTruckOrders">
                         <div class="market-locked">
                             <div class="market-locked-icon">🚚</div>
-                            Teherautó rendelések elérhetők 4. szinttől!
+                            Teherautó rendelések elérhetők 2. szinttől!
                         </div>
                     </div>
                 </div>
@@ -1424,6 +1424,7 @@
                 currentModal = null;
             }
         }
+        
 
         // === JÁTÉK ÁLLAPOT ===
         let gameState = {
@@ -1652,7 +1653,7 @@
                 input: { corn: 3, wheat: 2 },
                 output: { feed: 5 },
                 color: 0x8BC34A,
-                requiredLevel: 8
+                requiredLevel: 3
             }
         };
 
@@ -1662,7 +1663,7 @@
             wheat: { name: "Búza", icon: "🌾", value: 15, category: "crop" },
             carrot: { name: "Répa", icon: "🥕", value: 10, category: "crop" },
             tomato: { name: "Paradicsom", icon: "🍅", value: 25, category: "crop" },
-            wood: { name: "Fa", icon: "🪵", value: 50, category: "wood" },
+            wood: { name: "Fa", icon: "🌲", value: 50, category: "wood" },
             egg: { name: "Tojás", icon: "🥚", value: 30, category: "animal" },
             milk: { name: "Tej", icon: "🥛", value: 40, category: "animal" },
             bacon: { name: "Szalonna", icon: "🥓", value: 60, category: "animal" },
@@ -1698,6 +1699,30 @@
             controls.minDistance = 20;
             controls.maxDistance = 200;
 
+            // Egérgombok beállítása
+            controls.mouseButtons = {
+                LEFT: THREE.MOUSE.ROTATE,      // Bal klikk = forgatás
+                MIDDLE: THREE.MOUSE.DOLLY,     // Középső/görgő = zoom
+                RIGHT: THREE.MOUSE.PAN         // Jobb klikk = mozgatás
+            };
+
+            // Touch support
+            controls.touches = {
+                ONE: THREE.TOUCH.ROTATE,
+                TWO: THREE.TOUCH.DOLLY_PAN
+            };
+
+            // Új eseménykezelők
+            renderer.domElement.addEventListener('mousedown', onMouseDown);
+            renderer.domElement.addEventListener('mouseup', onMouseUp);
+            window.addEventListener('keyup', onKeyUp);
+
+            // Jobb klikk menü letiltása
+            renderer.domElement.addEventListener('contextmenu', function(event) {
+                event.preventDefault();
+                return false;
+            });
+
             raycaster = new THREE.Raycaster();
 
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -1710,6 +1735,13 @@
             createFarmGround();
             createGrid();
             initStorage();
+
+            if (gameState.level >= 2) {
+                setTimeout(() => {
+                    generateMarketOrders();
+                    generateTruckOrders();
+                }, 1000);
+            }
 
             window.addEventListener('resize', onWindowResize);
             renderer.domElement.addEventListener('click', onCanvasClick);
@@ -1733,18 +1765,19 @@
         function createFarmGround() {
             const groundGeometry = new THREE.PlaneGeometry(300, 300);
             const groundMaterial = new THREE.MeshLambertMaterial({ 
-                color: 0x4CAF50, 
+                color: 0x2E8B57, // Sötétebb zöld (Sea Green)
                 side: THREE.DoubleSide 
             });
             objects.ground = new THREE.Mesh(groundGeometry, groundMaterial);
             objects.ground.rotation.x = -Math.PI / 2;
             objects.ground.receiveShadow = true;
             scene.add(objects.ground);
-
+        
+            // Füvek színének módosítása
             for (let i = 0; i < 300; i++) {
                 const grassGeometry = new THREE.ConeGeometry(0.1, 0.3, 3);
                 const grassMaterial = new THREE.MeshLambertMaterial({ 
-                    color: Math.random() > 0.5 ? 0x7CB342 : 0x8BC34A 
+                    color: Math.random() > 0.5 ? 0x66BB6A : 0x81C784 // Világosabb zöldek
                 });
                 const grass = new THREE.Mesh(grassGeometry, grassMaterial);
                 grass.position.set(
@@ -1767,20 +1800,29 @@
             for (let i = 0; i < gridSize; i++) {
                 farmGrid[i] = [];
                 for (let j = 0; j < gridSize; j++) {
+                    // Erős kontraszt - világos sárgás színek
+                    const cellColors = [
+                        0x964B00,
+                        0x964B00,
+                    ];
+                    const cellColor = cellColors[(i + j) % 2];
+
                     const cellGeometry = new THREE.PlaneGeometry(gridSpacing * 0.95, gridSpacing * 0.95);
                     const cellMaterial = new THREE.MeshBasicMaterial({ 
-                        color: 0x81C784, 
-                        transparent: true, 
-                        opacity: 0.2,
+                        color: cellColor, 
+                        transparent: false, // Átlátszatlan!
                         side: THREE.DoubleSide,
-                        depthWrite: false
+                        depthWrite: false,
+                        polygonOffset: true,
+                        polygonOffsetFactor: -1,
+                        polygonOffsetUnits: -1
                     });
-
+                
                     const cell = new THREE.Mesh(cellGeometry, cellMaterial);
                     const worldX = startX + i * gridSpacing + gridSpacing / 2;
                     const worldZ = startZ + j * gridSpacing + gridSpacing / 2;
-
-                    cell.position.set(worldX, 0.02, worldZ);
+                
+                    cell.position.set(worldX, 0.1, worldZ); // Magasan a talaj felett
                     cell.rotation.x = -Math.PI / 2;
                     cell.userData = { 
                         type: 'farmCell', 
@@ -1788,9 +1830,9 @@
                         gridZ: j, 
                         occupied: false 
                     };
-
+                
                     scene.add(cell);
-
+                
                     farmGrid[i][j] = { 
                         mesh: cell, 
                         occupied: false, 
@@ -2512,21 +2554,21 @@
                 updateMobileStorage();
             });
             document.getElementById('mobileMarketBtn').addEventListener('click', () => {
-                if (gameState.level >= 4) {
+                if (gameState.level >= 2) {
                     openMobileModal('marketModal');
                     updateMobileMarketOrders();
                     updateOrdersStatus();
                 } else {
-                    showNotification('Piaci rendelések csak 4. szinttől elérhetők!');
+                    showNotification('Piaci rendelések csak 2. szinttől elérhetők!');
                 }
             });
             document.getElementById('mobileTruckBtn').addEventListener('click', () => {
-                if (gameState.level >= 4) {
+                if (gameState.level >= 2) {
                     openMobileModal('truckModal');
                     updateMobileTruckOrders();
                     updateOrdersStatus();
                 } else {
-                    showNotification('Teherautó rendelések csak 4. szinttől elérhetők!');
+                    showNotification('Teherautó rendelések csak 2. szinttől elérhetők!');
                 }
             });
             document.getElementById('mobileInfoBtn').addEventListener('click', () => {
@@ -2555,32 +2597,44 @@
             const plantDiv = document.createElement('div');
             plantDiv.className = 'plant-item';
             plantDiv.dataset.type = type;
-
+            plantDiv.dataset.requiredLevel = data.requiredLevel;
+        
             let icon = '🌱';
             if (type === 'tree') icon = '🌲';
             else if (type === 'corn') icon = '🌽';
             else if (type === 'wheat') icon = '🌾';
             else if (type === 'carrot') icon = '🥕';
             else if (type === 'tomato') icon = '🍅';
+        
+            // Ellenőrizzük, hogy elérhető-e - FONTOS: <= kell legyen
+            const isUnlocked = data.requiredLevel <= gameState.level;
 
             plantDiv.innerHTML = `
-                ${data.requiredLevel > gameState.level ? '<div class="lock-icon"><i class="fas fa-lock"></i></div>' : ''}
+                ${!isUnlocked ? '<div class="lock-icon"><i class="fas fa-lock"></i></div>' : ''}
                 <div class="plant-icon">${icon}</div>
                 <div class="plant-name">${data.name}</div>
                 <div class="plant-cost">${data.harvestValue}💰</div>
-                ${data.requiredLevel > gameState.level ? `<div class="level-required">${data.requiredLevel}. szint</div>` : ''}
+                ${!isUnlocked ? `<div class="level-required">${data.requiredLevel}. szint</div>` : ''}
             `;
-            
-            if (data.requiredLevel <= gameState.level) {
-                plantDiv.addEventListener('click', () => selectPlant(type));
+
+            if (isUnlocked) {
+                plantDiv.addEventListener('click', () => {
+                    console.log(`Növény kiválasztva: ${type}, requiredLevel: ${data.requiredLevel}, currentLevel: ${gameState.level}`);
+                    selectPlant(type);
+                });
+                plantDiv.style.cursor = 'pointer';
+                plantDiv.style.opacity = '1';
+                plantDiv.title = `${data.name} - ${data.harvestValue} arany\nElérhető: ${data.requiredLevel}. szinttől`;
             } else {
                 plantDiv.classList.add('locked-item');
-                plantDiv.title = `Szükséges: ${data.requiredLevel}. szint`;
+                plantDiv.title = `Zárolva\nSzükséges: ${data.requiredLevel}. szint\nJelenleg: ${gameState.level}. szint`;
                 plantDiv.addEventListener('click', () => {
-                    showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől!`);
+                    showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől! Jelenleg ${gameState.level}. szinten vagy.`);
                 });
+                plantDiv.style.cursor = 'not-allowed';
+                plantDiv.style.opacity = '0.6';
             }
-            
+
             return plantDiv;
         }
 
@@ -2588,7 +2642,7 @@
             const animalDiv = document.createElement('div');
             animalDiv.className = 'animal-item';
             animalDiv.dataset.type = type;
-            
+                
             animalDiv.innerHTML = `
                 ${data.requiredLevel > gameState.level ? '<div class="lock-icon"><i class="fas fa-lock"></i></div>' : ''}
                 <div class="animal-icon">${
@@ -2607,17 +2661,19 @@
                     gameState.selectedAnimal = type;
                     selectTool('animal');
                 });
+                animalDiv.title = `${data.name} - ${data.cost} arany`;
             } else {
                 animalDiv.classList.add('locked-item');
-                animalDiv.title = `Szükséges: ${data.requiredLevel}. szint`;
+                // Javított tooltip
+                animalDiv.title = `Szükséges: ${data.requiredLevel}. szint\nJelenlegi szinted: ${gameState.level}. szint\nHiányzik: ${data.requiredLevel - gameState.level} szint`;
                 animalDiv.addEventListener('click', () => {
-                    showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől!`);
+                    showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől! Jelenleg ${gameState.level}. szinten vagy.`);
                 });
             }
             
             return animalDiv;
         }
-
+        
         function createFactoryItem(type, data) {
             const factoryDiv = document.createElement('div');
             factoryDiv.className = 'factory-item';
@@ -2636,11 +2692,13 @@
                     gameState.selectedFactory = type;
                     selectTool('factory');
                 });
+                factoryDiv.title = `${data.name} - ${data.cost} arany`;
             } else {
                 factoryDiv.classList.add('locked-item');
-                factoryDiv.title = `Szükséges: ${data.requiredLevel}. szint`;
+                // Javított tooltip
+                factoryDiv.title = `Szükséges: ${data.requiredLevel}. szint\nJelenlegi szinted: ${gameState.level}. szint\nHiányzik: ${data.requiredLevel - gameState.level} szint`;
                 factoryDiv.addEventListener('click', () => {
-                    showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől!`);
+                    showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől! Jelenleg ${gameState.level}. szinten vagy.`);
                 });
             }
             
@@ -2659,42 +2717,52 @@
         }
 
         function selectPlant(type) {
-            const data = plantData[type];
-            if (!data) return;
-
-            // Ellenőrizzük az elérhetőséget
-            if (data.requiredLevel > gameState.level) {
-                showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől!`);
+            // Ellenőrizzük, hogy a típus létezik-e
+            if (!plantData[type]) {
+                showNotification(`Ismeretlen növény: ${type}`);
                 return;
             }
 
+            const data = plantData[type];
+
+            // Ellenőrizzük az elérhetőséget - FONTOS: <= kell legyen, nem <
+            if (data.requiredLevel > gameState.level) {
+                showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől! Jelenlegi szinted: ${gameState.level}`);
+                return;
+            }
+
+            // Ha elérhető, akkor kiválasztjuk
             gameState.selectedPlant = type;
             gameState.selectedTool = 'plant';
 
+            // Frissítsük a UI-t
             document.querySelectorAll('.plant-item').forEach(item => {
                 item.classList.remove('selected');
             });
 
-            document.querySelectorAll(`.plant-item[data-type="${type}"]`).forEach(item => {
+            // Kijelöljük a kiválasztottat
+            const selectedItems = document.querySelectorAll(`.plant-item[data-type="${type}"]`);
+            selectedItems.forEach(item => {
                 item.classList.add('selected');
             });
 
+            // Frissítsük a fejlécet
             document.getElementById('selectedPlantName').textContent = data.name;
 
-            if (gameState.selectedTool === 'plant') {
-                document.querySelectorAll('.tool-item').forEach(item => {
-                    item.classList.remove('selected');
-                });
+            // Kijelöljük a plant toolt
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.classList.remove('selected');
+            });
 
-                const plantToolElement = document.querySelector('.tool-item[data-type="plant"]');
-                if (plantToolElement) {
-                    plantToolElement.classList.add('selected');
-                }
+            const plantToolElement = document.querySelector('.tool-item[data-type="plant"]');
+            if (plantToolElement) {
+                plantToolElement.classList.add('selected');
             }
         
             updateSelectionUI();
 
-            showNotification(`${data.name} kiválasztva`);
+            // Módosított üzenet: nem csak hogy kiválasztva, hanem hogy készen áll az ültetésre
+            showNotification(`${data.name} kiválasztva! Kattints egy üres cellára az ültetéshez.`);
         }
         
         function selectTool(type) {
@@ -2716,50 +2784,326 @@
         }
 
         function updateAvailableItems() {
-            // Frissíti az elérhető elemeket a jelenlegi szint alapján
+            console.log(`=== Frissítés elérhető elemek ===`);
+            console.log(`Jelenlegi szint: ${gameState.level}`);
+
+            // 1. Növények frissítése
             document.querySelectorAll('.plant-item').forEach(item => {
                 const type = item.dataset.type;
                 const data = plantData[type];
                 if (data) {
-                    if (data.requiredLevel <= gameState.level) {
+                    const isUnlocked = data.requiredLevel <= gameState.level;
+                    console.log(`${type}: required=${data.requiredLevel}, current=${gameState.level}, unlocked=${isUnlocked}`);
+
+                    if (isUnlocked) {
+                        // Elérhető - távolítsuk el a zárolt státuszt
                         item.classList.remove('locked-item');
+                        item.style.opacity = '1';
+                        item.style.cursor = 'pointer';
+                        item.title = `${data.name} - ${data.harvestValue} arany`;
+
+                        // Távolítsuk el a zár ikont
+                        const lockIcon = item.querySelector('.lock-icon');
+                        if (lockIcon) lockIcon.remove();
+
+                        // Távolítsuk el a szintkövetelmény szöveget
+                        const levelReq = item.querySelector('.level-required');
+                        if (levelReq) levelReq.remove();
+
+                        // Frissítsük az eseménykezelőt (klónozással)
+                        const oldItem = item;
+                        const newItem = item.cloneNode(true);
+                        oldItem.parentNode.replaceChild(newItem, oldItem);
+
+                        // Új eseménykezelő hozzáadása
+                        newItem.addEventListener('click', (e) => {
+                            console.log(`Növény kiválasztva: ${type}`);
+                            e.stopPropagation();
+                            selectPlant(type);
+                        });
+
                     } else {
+                        // Zárolt - állítsuk be a zárolt státuszt
                         item.classList.add('locked-item');
+                        item.style.opacity = '0.6';
+                        item.style.cursor = 'not-allowed';
+                        item.title = `Zárolva\nSzükséges: ${data.requiredLevel}. szint\nJelenleg: ${gameState.level}. szint`;
+
+                        // Ellenőrizzük, van-e már zár ikon
+                        if (!item.querySelector('.lock-icon')) {
+                            const lockIcon = document.createElement('div');
+                            lockIcon.className = 'lock-icon';
+                            lockIcon.innerHTML = '<i class="fas fa-lock"></i>';
+                            item.appendChild(lockIcon);
+                        }
+
+                        // Ellenőrizzük, van-e már szintkövetelmény
+                        if (!item.querySelector('.level-required')) {
+                            const levelReq = document.createElement('div');
+                            levelReq.className = 'level-required';
+                            levelReq.textContent = `${data.requiredLevel}. szint`;
+                            item.appendChild(levelReq);
+                        }
+
+                        // Frissítsük az eseménykezelőt (klónozással)
+                        const oldItem = item;
+                        const newItem = item.cloneNode(true);
+                        oldItem.parentNode.replaceChild(newItem, oldItem);
+
+                        // Új eseménykezelő hozzáadása
+                        newItem.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől! Jelenleg ${gameState.level}. szinten vagy.`);
+                        });
                     }
                 }
             });
-            
+
+            // 2. Állatok frissítése
             document.querySelectorAll('.animal-item').forEach(item => {
                 const type = item.dataset.type;
                 const data = animalData[type];
                 if (data) {
-                    if (data.requiredLevel <= gameState.level) {
+                    const isUnlocked = data.requiredLevel <= gameState.level;
+                    console.log(`Állat ${type}: required=${data.requiredLevel}, current=${gameState.level}, unlocked=${isUnlocked}`);
+
+                    if (isUnlocked) {
+                        // Elérhető
                         item.classList.remove('locked-item');
+                        item.style.opacity = '1';
+                        item.style.cursor = 'pointer';
+                        item.title = `${data.name} - ${data.cost} arany`;
+
+                        // Távolítsuk el a zár ikont
+                        const lockIcon = item.querySelector('.lock-icon');
+                        if (lockIcon) lockIcon.remove();
+
+                        // Távolítsuk el a szintkövetelmény szöveget
+                        const levelReq = item.querySelector('.level-required');
+                        if (levelReq) levelReq.remove();
+
+                        // Frissítsük az eseménykezelőt
+                        const oldItem = item;
+                        const newItem = item.cloneNode(true);
+                        oldItem.parentNode.replaceChild(newItem, oldItem);
+
+                        newItem.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            gameState.selectedAnimal = type;
+                            selectTool('animal');
+                            showNotification(`${data.name} kiválasztva! Kattints egy üres cellára.`);
+                        });
+
                     } else {
+                        // Zárolt
                         item.classList.add('locked-item');
+                        item.style.opacity = '0.6';
+                        item.style.cursor = 'not-allowed';
+                        item.title = `Zárolva\nSzükséges: ${data.requiredLevel}. szint\nJelenleg: ${gameState.level}. szint`;
+
+                        // Zár ikon hozzáadása ha nincs
+                        if (!item.querySelector('.lock-icon')) {
+                            const lockIcon = document.createElement('div');
+                            lockIcon.className = 'lock-icon';
+                            lockIcon.innerHTML = '<i class="fas fa-lock"></i>';
+                            item.appendChild(lockIcon);
+                        }
+
+                        // Szintkövetelmény hozzáadása ha nincs
+                        if (!item.querySelector('.level-required')) {
+                            const levelReq = document.createElement('div');
+                            levelReq.className = 'level-required';
+                            levelReq.textContent = `${data.requiredLevel}. szint`;
+                            item.appendChild(levelReq);
+                        }
+
+                        // Frissítsük az eseménykezelőt
+                        const oldItem = item;
+                        const newItem = item.cloneNode(true);
+                        oldItem.parentNode.replaceChild(newItem, oldItem);
+
+                        newItem.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől! Jelenleg ${gameState.level}. szinten vagy.`);
+                        });
                     }
                 }
             });
-            
+
+            // 3. Gyárak frissítése
             document.querySelectorAll('.factory-item').forEach(item => {
                 const type = item.dataset.type;
                 const data = factoryData[type];
                 if (data) {
-                    if (data.requiredLevel <= gameState.level) {
+                    const isUnlocked = data.requiredLevel <= gameState.level;
+                    console.log(`Gyár ${type}: required=${data.requiredLevel}, current=${gameState.level}, unlocked=${isUnlocked}`);
+
+                    if (isUnlocked) {
+                        // Elérhető
                         item.classList.remove('locked-item');
+                        item.style.opacity = '1';
+                        item.style.cursor = 'pointer';
+                        item.title = `${data.name} - ${data.cost} arany`;
+
+                        // Távolítsuk el a zár ikont
+                        const lockIcon = item.querySelector('.lock-icon');
+                        if (lockIcon) lockIcon.remove();
+
+                        // Távolítsuk el a szintkövetelmény szöveget
+                        const levelReq = item.querySelector('.level-required');
+                        if (levelReq) levelReq.remove();
+
+                        // Frissítsük az eseménykezelőt
+                        const oldItem = item;
+                        const newItem = item.cloneNode(true);
+                        oldItem.parentNode.replaceChild(newItem, oldItem);
+
+                        newItem.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            gameState.selectedFactory = type;
+                            selectTool('factory');
+                            showNotification(`${data.name} kiválasztva! Kattints egy üres cellára.`);
+                        });
+
                     } else {
+                        // Zárolt
                         item.classList.add('locked-item');
+                        item.style.opacity = '0.6';
+                        item.style.cursor = 'not-allowed';
+                        item.title = `Zárolva\nSzükséges: ${data.requiredLevel}. szint\nJelenleg: ${gameState.level}. szint`;
+
+                        // Zár ikon hozzáadása ha nincs
+                        if (!item.querySelector('.lock-icon')) {
+                            const lockIcon = document.createElement('div');
+                            lockIcon.className = 'lock-icon';
+                            lockIcon.innerHTML = '<i class="fas fa-lock"></i>';
+                            item.appendChild(lockIcon);
+                        }
+
+                        // Szintkövetelmény hozzáadása ha nincs
+                        if (!item.querySelector('.level-required')) {
+                            const levelReq = document.createElement('div');
+                            levelReq.className = 'level-required';
+                            levelReq.textContent = `${data.requiredLevel}. szint`;
+                            item.appendChild(levelReq);
+                        }
+
+                        // Frissítsük az eseménykezelőt
+                        const oldItem = item;
+                        const newItem = item.cloneNode(true);
+                        oldItem.parentNode.replaceChild(newItem, oldItem);
+
+                        newItem.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            showNotification(`${data.name} elérhető ${data.requiredLevel}. szinttől! Jelenleg ${gameState.level}. szinten vagy.`);
+                        });
                     }
                 }
             });
-            
-            // Piac és teherautó rendelések megjelenítése 4. szinttől
-            if (gameState.level >= 4) {
-                document.getElementById('marketOrders').innerHTML = '';
-                document.getElementById('truckOrders').innerHTML = '';
-                generateMarketOrders();
-                generateTruckOrders();
-                updateOrdersStatus();
+
+            // 4. Piaci rendelések megjelenítése 4. szinttől
+            if (gameState.level >= 2) {
+                console.log('2. szint elérve - piaci rendelések aktiválva');
+
+                // Generálj rendeléseket ha még nincsenek
+                if (gameState.marketOrders.length === 0) {
+                    generateMarketOrders();
+                }
+                if (gameState.truckOrders.length === 0) {
+                    generateTruckOrders();
+                }
+
+                // Frissítsd az UI-t
+                updateMarketOrdersUI();
+                updateTruckOrdersUI();
+
+                // Frissítsük a panel címeket
+                document.querySelectorAll('.panel-section .section-title span').forEach(title => {
+                    if (title.textContent.includes('Piaci rendelések') || title.textContent.includes('Teherautó')) {
+                        const lockSpan = title.querySelector('.level-lock');
+                        if (lockSpan) lockSpan.remove();
+                    }
+                });
+            } else {
+                // Ha nincs 4. szint, akkor zárolt üzenet
+                const marketOrders = document.getElementById('marketOrders');
+                const truckOrders = document.getElementById('truckOrders');
+
+                if (marketOrders && !marketOrders.querySelector('.market-locked')) {
+                    marketOrders.innerHTML = `
+                        <div class="market-locked">
+                            <div class="market-locked-icon">🔒</div>
+                            Piaci rendelések elérhetők 2. szinttől!
+                            <br><small>Jelenleg: ${gameState.level}. szint</small>
+                        </div>
+                    `;
+                }
+
+                if (truckOrders && !truckOrders.querySelector('.market-locked')) {
+                    truckOrders.innerHTML = `
+                        <div class="market-locked">
+                            <div class="market-locked-icon">🚚</div>
+                            Teherautó rendelések elérhetők 2. szinttől!
+                            <br><small>Jelenleg: ${gameState.level}. szint</small>
+                        </div>
+                    `;
+                }
+            }
+
+            // 5. Frissítsük a panel címek szint információit
+            updatePanelTitles();
+
+            console.log('=== Frissítés befejezve ===');
+        }
+
+        function checkAndGenerateOrders() {
+            if (gameState.level >= 2) {
+                // Piaci rendelések generálása ha kevesebb mint 2 van
+                if (gameState.marketOrders.length < 2) {
+                    generateMarketOrders();
+                }
+
+                // Teherautó rendelések generálása ha nincs
+                if (gameState.truckOrders.length < 1) {
+                    generateTruckOrders();
+                }
+            }
+        }
+
+        // Segédfüggvény a panel címek frissítéséhez
+        function updatePanelTitles() {
+            // Növények panel
+            const plantsTitle = document.querySelector('.panel-section:nth-child(1) .section-title span:first-child');
+            if (plantsTitle) {
+                plantsTitle.innerHTML = `Növények <span class="level-lock">(1. szint)</span>`;
+            }
+
+            // Állatok panel
+            const animalsTitle = document.querySelector('.panel-section:nth-child(2) .section-title span:first-child');
+            if (animalsTitle) {
+                const canAccessAnimals = gameState.level >= 3;
+                animalsTitle.innerHTML = `Állatok <span class="level-lock" style="color: ${canAccessAnimals ? '#4CAF50' : '#ff9800'}">(${canAccessAnimals ? 'Elérhető' : '3. szint'})</span>`;
+            }
+
+            // Gyárak panel
+            const factoriesTitle = document.querySelector('.panel-section:nth-child(3) .section-title span:first-child');
+            if (factoriesTitle) {
+                const canAccessFactories = gameState.level >= 3;
+                factoriesTitle.innerHTML = `Gyárak <span class="level-lock" style="color: ${canAccessFactories ? '#4CAF50' : '#ff9800'}">(${canAccessFactories ? 'Elérhető' : '3. szint'})</span>`;
+            }
+
+            // Piac panel
+            const marketTitle = document.querySelector('.right-panel .panel-section:nth-child(2) .section-title span:first-child');
+            if (marketTitle) {
+                const canAccessMarket = gameState.level >= 2;
+                marketTitle.innerHTML = `Piaci rendelések <span class="level-lock" style="color: ${canAccessMarket ? '#4CAF50' : '#ff9800'}">(${canAccessMarket ? 'Elérhető' : '2. szint'})</span>`;
+            }
+
+            // Teherautó panel
+            const truckTitle = document.querySelector('.right-panel .panel-section:nth-child(3) .section-title span:first-child');
+            if (truckTitle) {
+                const canAccessTruck = gameState.level >= 2;
+                truckTitle.innerHTML = `Teherautó megrendelések <span class="level-lock" style="color: ${canAccessTruck ? '#4CAF50' : '#ff9800'}">(${canAccessTruck ? 'Elérhető' : '2. szint'})</span>`;
             }
         }
 
@@ -2784,42 +3128,70 @@
             }
         }
 
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        const DRAG_THRESHOLD = 5; // pixel
+
         function onCanvasClick(event) {
+            // Ha CTRL vagy Command (Mac) nyomva van, akkor NE helyezzen le semmit
+            if (event.ctrlKey || event.metaKey) {
+                console.log('CTRL + klikk - kamera mozgatás mód');
+                return;
+            }
+
+            // Ha a jobb egérgombot nyomtuk (button === 2), akkor is csak kamera mozgatás
+            if (event.button === 2) {
+                console.log('Jobb klikk - kamera mozgatás');
+                return;
+            }
+
+            // Csak bal klikk (button === 0) és nincs CTRL lenyomva esetén
+            if (event.button !== 0) {
+                return;
+            }
+
+            // Ha éppen dragoltunk (mozgattuk az egeret), akkor ne legyen kattintás
+            if (isDragging) {
+                console.log('Drag volt - nem kattintás');
+                isDragging = false;
+                return;
+            }
+
+            // Számítsuk ki a kurzor pozícióját a 3D térben
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
             raycaster.setFromCamera(mouse, camera);
-
-            // Összegyűjtjük AZ ÖSSZES objektumot
+        
             const intersectObjects = [];
-
-            // Minden objektumot hozzáadunk
             scene.traverse(object => {
-                intersectObjects.push(object);
+                if (object.visible && (object.isMesh || object.isGroup || object.isLine || object.isSprite)) {
+                    intersectObjects.push(object);
+                }
             });
-        
+
             const intersects = raycaster.intersectObjects(intersectObjects, true);
-        
+
             if (intersects.length > 0) {
                 let clickedObject = intersects[0].object;
-
-                // Keresd meg a legközelebbi parent-et, amelynek van userData.type-ja
+            
                 while (clickedObject) {
                     if (clickedObject.userData && clickedObject.userData.type) {
                         break;
                     }
                     clickedObject = clickedObject.parent;
                 }
-
+            
                 if (clickedObject && clickedObject.userData) {
                     const userData = clickedObject.userData;
-
+                
                     if (userData.type === 'farmCell') {
+                        console.log('Farm cellára kattintottam:', userData.gridX, userData.gridZ);
                         handleCellClick(userData);
                     } else {
+                        console.log('Objektumra kattintottam:', userData.type, userData.id);
                         handleObjectClick(clickedObject);
                     }
-                } else {
-                    showNotification('Nem található objektum a kattintás helyén!');
                 }
             }
         }
@@ -3829,74 +4201,76 @@
         }
 
         function generateMarketOrders() {
-            if (gameState.level < 4) return;
-            
+            if (gameState.level < 2) return;
+
             const customers = ['Kovács úr', 'Nagy néni', 'Kisbolt', 'Étterem', 'Iskola', 'Hotel'];
             const orderTypes = [
-                { items: { bread: 2, cheese: 1 }, reward: 300, time: 120000 },
-                { items: { burger: 3, tomato: 2 }, reward: 500, time: 180000 },
-                { items: { egg: 5, milk: 3 }, reward: 250, time: 90000 },
-                { items: { honey: 2, goatmilk: 1 }, reward: 400, time: 150000 },
-                { items: { corn: 10, wheat: 8 }, reward: 200, time: 60000 }
+                { items: { wheat: 5 }, reward: 100, time: 120000 },
+                { items: { corn: 3 }, reward: 150, time: 90000 },
+                { items: { egg: 2 }, reward: 200, time: 60000 },
+                { items: { milk: 1 }, reward: 120, time: 60000 },
+                { items: { wheat: 3, corn: 2 }, reward: 180, time: 150000 }
             ];
-            
-            // Minden szinthez +1 megrendelés
-            const ordersCount = Math.min(gameState.level - 3, 5); // Maximum 5 megrendelés
-            
+
+            // Egyszerűbb logika: 2-3 megrendelés 2. szinttől
+            const ordersCount = Math.min(2 + Math.floor(gameState.level / 2), 5);
+
             gameState.marketOrders = [];
-            
+
             for (let i = 0; i < ordersCount; i++) {
                 const orderType = orderTypes[Math.floor(Math.random() * orderTypes.length)];
                 const customer = customers[Math.floor(Math.random() * customers.length)];
-                
+
                 gameState.marketOrders.push({
                     id: 'order_' + Date.now() + '_' + i,
                     customer: customer,
                     items: orderType.items,
                     reward: orderType.reward,
-                    expiresAt: Date.now() + orderType.time
+                    expiresAt: Date.now() + orderType.time,
+                    canFulfill: false
                 });
             }
-            
+
             updateMarketOrdersUI();
         }
 
         function generateTruckOrders() {
-            if (gameState.level < 4) return;
-            
+            if (gameState.level < 2) return;
+
             const truckOrders = [
-                { items: { wood: 20, flour: 10 }, reward: 1000, xp: 50, time: 300000 },
-                { items: { sugar: 15, bread: 8 }, reward: 1200, xp: 60, time: 240000 },
-                { items: { cheese: 5, burger: 4 }, reward: 800, xp: 40, time: 180000 },
-                { items: { honey: 3, egg: 12 }, reward: 600, xp: 30, time: 150000 }
+                { items: { wheat: 10 }, reward: 250, xp: 25, time: 180000 },
+                { items: { corn: 8 }, reward: 300, xp: 30, time: 150000 },
+                { items: { egg: 5 }, reward: 400, xp: 40, time: 120000 },
+                { items: { wheat: 5, corn: 5 }, reward: 350, xp: 35, time: 200000 }
             ];
-            
-            // Minden szinthez +1 megrendelés (4. szinttől)
-            const ordersCount = Math.min(gameState.level - 3, 3); // Maximum 3 megrendelés
-            
+
+            // 1-2 megrendelés 2. szinttől
+            const ordersCount = Math.min(1 + Math.floor(gameState.level / 3), 3);
+
             gameState.truckOrders = [];
-            
+
             for (let i = 0; i < ordersCount; i++) {
                 const order = truckOrders[Math.floor(Math.random() * truckOrders.length)];
-                
+
                 gameState.truckOrders.push({
                     id: 'truck_' + Date.now() + '_' + i,
                     items: order.items,
                     reward: order.reward,
                     xp: order.xp,
-                    expiresAt: Date.now() + order.time
+                    expiresAt: Date.now() + order.time,
+                    canFulfill: false
                 });
             }
-            
+
             updateTruckOrdersUI();
         }
 
         function updateMarketOrdersUI() {
-            if (gameState.level < 4) {
+            if (gameState.level < 2) {
                 document.getElementById('marketOrders').innerHTML = `
                     <div class="market-locked">
                         <div class="market-locked-icon">🔒</div>
-                        Piaci rendelések elérhetők 4. szinttől!
+                        Piaci rendelések elérhetők 2. szinttől!
                     </div>
                 `;
                 return;
@@ -3981,11 +4355,11 @@
         }
 
         function updateTruckOrdersUI() {
-            if (gameState.level < 4) {
+            if (gameState.level < 2) {
                 document.getElementById('truckOrders').innerHTML = `
                     <div class="market-locked">
                         <div class="market-locked-icon">🚚</div>
-                        Teherautó rendelések elérhetők 4. szinttől!
+                        Teherautó rendelések elérhetők 2. szinttől!
                     </div>
                 `;
                 return;
@@ -4219,8 +4593,8 @@
         }
 
         function refreshOrders() {
-            if (gameState.level < 4) {
-                showNotification('Piaci rendelések csak 4. szinttől elérhetők!');
+            if (gameState.level < 2) {
+                showNotification('Piaci rendelések csak 2. szinttől elérhetők!');
                 return;
             }
             
@@ -4283,14 +4657,42 @@
             });
         }
 
+        // Új: Mouse down eseménykezelő a drag detektáláshoz
+        function onMouseDown(event) {
+            // Csak bal egérgombra (button === 0)
+            if (event.button === 0) {
+                dragStart.x = event.clientX;
+                dragStart.y = event.clientY;
+                isDragging = false;
+
+                // Ha CTRL van lenyomva, akkor rögtön drag módban vagyunk
+                if (event.ctrlKey || event.metaKey) {
+                    isDragging = true;
+                }
+            }
+        }
+
+        // Új: Mouse move eseménykezelő
         function onMouseMove(event) {
+            // Ha nincs mouse down állapotban, akkor csak a tooltip-et frissítjük
+            if (dragStart.x !== 0 || dragStart.y !== 0) {
+                const dx = Math.abs(event.clientX - dragStart.x);
+                const dy = Math.abs(event.clientY - dragStart.y);
+
+                // Ha elég messzire mozdult, akkor drag-nek tekintjük
+                if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+                    isDragging = true;
+                }
+            }
+
+            // Tooltip frissítése (a meglévő kód)
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-                
+
             raycaster.setFromCamera(mouse, camera);
-                
+
             const intersectableObjects = [];
-                
+
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
                     if (farmGrid[i] && farmGrid[i][j] && farmGrid[i][j].mesh) {
@@ -4298,7 +4700,7 @@
                     }
                 }
             }
-            
+
             objects.placedObjects.forEach(plant => {
                 if (plant && plant.isObject3D) {
                     intersectableObjects.push(plant);
@@ -4311,11 +4713,11 @@
                     }
                 }
             });
-            
+
             objects.animals.forEach(animal => {
                 if (animal && animal.isObject3D) {
                     intersectableObjects.push(animal);
-                    
+
                     if (animal.children && animal.children.length > 0) {
                         animal.children.forEach(child => {
                             if (child && child.isMesh) {
@@ -4325,11 +4727,11 @@
                     }
                 }
             });
-            
+
             objects.factories.forEach(factory => {
                 if (factory && factory.isObject3D) {
                     intersectableObjects.push(factory);
-                    
+
                     if (factory.children && factory.children.length > 0) {
                         factory.children.forEach(child => {
                             if (child && child.isMesh) {
@@ -4339,35 +4741,35 @@
                     }
                 }
             });
-            
+
             const intersects = raycaster.intersectObjects(intersectableObjects, false);
-            
+
             const tooltip = document.getElementById('objectTooltip');
-            
+
             if (intersects.length > 0) {
                 const firstIntersect = intersects[0];
                 let targetObject = firstIntersect.object;
-                
+
                 while (targetObject) {
                     if (targetObject.userData && targetObject.userData.type) {
                         break;
                     }
                     targetObject = targetObject.parent;
                 }
-                
+
                 if (targetObject && targetObject.userData) {
                     hoveredObject = targetObject;
                     const userData = targetObject.userData;
-                    
+
                     let info = '';
                     let color = '#FFFFFF';
                     let title = '';
-                    
+
                     switch (userData.type) {
                         case 'plant':
                             const plantType = plantData[userData.plantType];
                             title = plantType ? plantType.name : 'Növény';
-                            
+
                             if (userData.ready) {
                                 if (userData.decayed) {
                                     info = '⚠️ Megromlott!';
@@ -4375,8 +4777,8 @@
                                 } else {
                                     info = '✅ Érett a betakarításra!';
                                     color = '#4CAF50';
-                                    
-                                    if (gameState.selectedTool === 'harvest') {
+
+                                    if (gameState.selectedTool === 'harvest' && !isDragging) {
                                         info += '<br><span style="color:#FFD700; font-weight:bold;">KATTINTS A BETAKARÍTÁSHOZ!</span>';
                                     }
                                 }
@@ -4384,18 +4786,18 @@
                                 const progress = Math.min((Date.now() - userData.plantedAt) / userData.growthTime, 1);
                                 const percent = Math.floor(progress * 100);
                                 info = `Növekedés: ${percent}%`;
-                                
+
                                 if (userData.hasPest) {
                                     info += '<br>🐛 Kártevők!';
                                     color = '#FF9800';
                                 }
                             }
                             break;
-                            
+
                         case 'animal':
                             const animalType = animalData[userData.animalType];
                             title = animalType ? animalType.name : 'Állat';
-                            
+
                             const animalIcons = {
                                 chicken: '🐔',
                                 cow: '🐄',
@@ -4403,18 +4805,18 @@
                                 goat: '🐐',
                                 bee: '🐝'
                             };
-                            
+
                             const icon = animalIcons[userData.animalType] || '🐾';
-                            
+
                             if (userData.fed) {
                                 info = `${icon} Jól lakott`;
                                 color = '#4CAF50';
-                                
+
                                 if (userData.productReady) {
                                     info += '<br>📦 Termék kész!';
                                     color = '#FFD700';
-                                    
-                                    if (gameState.selectedTool === 'collect') {
+
+                                    if (gameState.selectedTool === 'collect' && !isDragging) {
                                         info += '<br><span style="color:#FFD700; font-weight:bold;">KATTINTS A GYŰJTÉSHEZ!</span>';
                                     }
                                 } else {
@@ -4428,17 +4830,17 @@
                                 const percent = Math.floor(hungerProgress * 100);
                                 info = `${icon} Éhes: ${percent}%`;
                                 color = '#FF9800';
-                                
-                                if (gameState.selectedTool === 'feed') {
+
+                                if (gameState.selectedTool === 'feed' && !isDragging) {
                                     info += '<br><span style="color:#FFD700; font-weight:bold;">KATTINTS AZ ETETÉSHEZ!</span>';
                                 }
                             }
                             break;
-                            
+
                         case 'factory':
                             const factoryType = factoryData[userData.factoryType];
                             title = factoryType ? factoryType.name : 'Gyár';
-                            
+
                             if (userData.processing) {
                                 const progress = Math.min((Date.now() - userData.processStart) / userData.processTime, 1);
                                 const percent = Math.floor(progress * 100);
@@ -4447,13 +4849,13 @@
                             } else if (userData.productReady) {
                                 info = '📦 Termék kész!';
                                 color = '#FFD700';
-                                
-                                if (gameState.selectedTool === 'collect') {
+
+                                if (gameState.selectedTool === 'collect' && !isDragging) {
                                     info += '<br><span style="color:#FFD700; font-weight:bold;">KATTINTS A GYŰJTÉSHEZ!</span>';
                                 }
                             } else {
                                 info = '⏸️ Készen áll';
-                                
+
                                 if (userData.input) {
                                     let inputs = [];
                                     for (const [item, count] of Object.entries(userData.input)) {
@@ -4466,35 +4868,51 @@
                                 }
                             }
                             break;
-                            
+
                         case 'farmCell':
-                            title = farmGrid[userData.gridX][userData.gridZ].occupied ? 'Foglalt cella' : 'Üres cella';
-                            
-                            if (!farmGrid[userData.gridX][userData.gridZ].occupied) {
+                            const cell = farmGrid[userData.gridX][userData.gridZ];
+                            title = cell.occupied ? 'Foglalt cella' : 'Üres cella';
+
+                            if (!cell.occupied) {
                                 info = '✨ Üres terület';
                                 color = '#81C784';
-                                
-                                if (gameState.selectedTool === 'plant' && gameState.selectedPlant) {
-                                    const plant = plantData[gameState.selectedPlant];
-                                    info += `<br><span style="color:#FFD700; font-weight:bold;">KATTINTS A ${plant.name.toUpperCase()} ÜLTETÉSÉHEZ!</span>`;
-                                } else if (gameState.selectedTool === 'animal' && gameState.selectedAnimal) {
-                                    const animal = animalData[gameState.selectedAnimal];
-                                    info += `<br><span style="color:#FFD700; font-weight:bold;">KATTINTS A ${animal.name.toUpperCase()} ELHELYEZÉSÉHEZ!</span>`;
-                                } else if (gameState.selectedTool === 'factory' && gameState.selectedFactory) {
-                                    const factory = factoryData[gameState.selectedFactory];
-                                    info += `<br><span style="color:#FFD700; font-weight:bold;">KATTINTS A ${factory.name.toUpperCase()} FELÉPÍTÉSÉHEZ!</span>`;
+
+                                // Csak akkor mutassuk az "ültetés" üzenetet, ha NINCS drag módban
+                                if (!isDragging && !event.ctrlKey && !event.metaKey) {
+                                    if (gameState.selectedTool === 'plant' && gameState.selectedPlant) {
+                                        const plant = plantData[gameState.selectedPlant];
+                                        info += `<br><span style="color:#FFD700; font-weight:bold;">KATTINTS A ${plant.name.toUpperCase()} ÜLTETÉSÉHEZ!</span>`;
+                                    } else if (gameState.selectedTool === 'animal' && gameState.selectedAnimal) {
+                                        const animal = animalData[gameState.selectedAnimal];
+                                        info += `<br><span style="color:#FFD700; font-weight:bold;">KATTINTS A ${animal.name.toUpperCase()} ELHELYEZÉSÉHEZ!</span>`;
+                                    } else if (gameState.selectedTool === 'factory' && gameState.selectedFactory) {
+                                        const factory = factoryData[gameState.selectedFactory];
+                                        info += `<br><span style="color:#FFD700; font-weight:bold;">KATTINTS A ${factory.name.toUpperCase()} FELÉPÍTÉSÉHEZ!</span>`;
+                                    }
+                                } else if (isDragging || event.ctrlKey || event.metaKey) {
+                                    info += '<br><span style="color:#FF9800;">Kamera mozgatás mód</span>';
                                 }
                             } else {
                                 info = '⛔ Foglalt';
                                 color = '#FF4444';
+
+                                if (!isDragging && !event.ctrlKey && !event.metaKey) {
+                                    if (cell.objectType === 'plant') {
+                                        info += '<br>🌱 Növény';
+                                    } else if (cell.objectType === 'animal') {
+                                        info += '<br>🐔 Állat';
+                                    } else if (cell.objectType === 'factory') {
+                                        info += '<br>🏭 Gyár';
+                                    }
+                                }
                             }
                             break;
-                            
+
                         default:
                             title = 'Ismeretlen objektum';
                             info = `Típus: ${userData.type}`;
                     }
-                    
+
                     const tooltipContent = `
                         <div style="margin-bottom: 5px;">
                             <strong style="color: ${color};">${title}</strong>
@@ -4502,6 +4920,9 @@
                         <div style="font-size: 0.9em;">
                             ${info}
                         </div>
+                        ${(isDragging || event.ctrlKey || event.metaKey) ? 
+                            '<div style="margin-top: 5px; font-size: 0.8em; color: #FF9800; border-top: 1px solid #FF9800; padding-top: 3px;">Kamera mozgatás mód</div>' : 
+                            ''}
                     `;
                     
                     if (tooltip) {
@@ -4511,7 +4932,7 @@
                         tooltip.style.borderColor = color;
                         tooltip.style.display = 'block';
                         tooltip.style.zIndex = '1000';
-                        
+
                         if (targetObject.type === 'Group' && targetObject.children) {
                             const iconMesh = targetObject.children.find(child => 
                                 child.geometry && child.geometry.type === 'PlaneGeometry'
@@ -4520,15 +4941,48 @@
                                 iconMesh.lookAt(camera.position);
                             }
                         }
-                        
+
                         return;
                     }
                 }
             }
-            
+
             hoveredObject = null;
             if (tooltip) {
                 tooltip.style.display = 'none';
+            }
+        }
+
+        // Új: Mouse up eseménykezelő
+        function onMouseUp(event) {
+            // Reseteljük a drag állapotot
+            dragStart.x = 0;
+            dragStart.y = 0;
+
+            // Kis késleltetés, hogy biztosan ne legyen kattintás drag után
+            if (isDragging) {
+                setTimeout(() => {
+                    isDragging = false;
+                }, 50);
+            } else {
+                isDragging = false;
+            }
+        }
+
+        // Új: Key up eseménykezelő a CTRL elengedéséhez
+        function onKeyUp(event) {
+            if (event.key === 'Control' || event.key === 'Meta') {
+                // Amikor elengedi a CTRL-t, akkor is reseteljük a drag-ot
+                isDragging = false;
+                dragStart.x = 0;
+                dragStart.y = 0;
+
+                // Kis delay, hogy biztosan ne legyen véletlen kattintás
+                setTimeout(() => {
+                    if (!event.ctrlKey && !event.metaKey) {
+                        console.log('CTRL elengedve - vissza normál módba');
+                    }
+                }, 100);
             }
         }
 
@@ -4661,11 +5115,11 @@
             const mobileMarketOrders = document.getElementById('mobileMarketOrders');
             if (!mobileMarketOrders) return;
             
-            if (gameState.level < 4) {
+            if (gameState.level < 2) {
                 mobileMarketOrders.innerHTML = `
                     <div class="market-locked">
                         <div class="market-locked-icon">🔒</div>
-                        Piaci rendelések elérhetők 4. szinttől!
+                        Piaci rendelések elérhetők 2. szinttől!
                     </div>
                 `;
                 return;
@@ -4703,11 +5157,11 @@
             const truckOrders = document.getElementById('mobileTruckOrders');
             if (!truckOrders) return;
             
-            if (gameState.level < 4) {
+            if (gameState.level < 2) {
                 truckOrders.innerHTML = `
                     <div class="market-locked">
                         <div class="market-locked-icon">🚚</div>
-                        Teherautó rendelések elérhetők 4. szinttől!
+                        Teherautó rendelések elérhetők 2. szinttől!
                     </div>
                 `;
                 return;
@@ -4750,7 +5204,8 @@
             updateFactories();
 
             const now = Date.now();
-            if (!gameState.lastOrderCheck || now - gameState.lastOrderCheck > 1000) {
+            if (!gameState.lastOrderCheck || now - gameState.lastOrderCheck > 30000) { // 30 másodpercenként
+                checkAndGenerateOrders();
                 updateOrdersStatus();
                 gameState.lastOrderCheck = now;
             }
@@ -4789,3 +5244,4 @@
     </script>
 </body>
 </html>
+
